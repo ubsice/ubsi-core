@@ -1,0 +1,11 @@
+[
+  {
+    "Service": "*",
+    "Nodes": [
+      {
+        "Host": "localhost",
+        "Port": 7112
+      }
+    ]
+  }
+]

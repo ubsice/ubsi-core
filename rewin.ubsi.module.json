@@ -1,0 +1,8 @@
+{
+  "services": {
+    "ubsi.test": {
+      "class_name": "rewin.ubsi.test.Service",
+      "startup": true
+    }
+  }
+}
