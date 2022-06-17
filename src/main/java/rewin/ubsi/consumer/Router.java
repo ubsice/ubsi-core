@@ -12,20 +12,16 @@ import java.util.concurrent.*;
 class Router {
 
     volatile static Map<String, Register.Container> Containers = null;   // 容器注册数据
-    static ConcurrentMap<String, Long> Disabled = new ConcurrentHashMap<>();    // 节点连接失败的时间戳
+    static ConcurrentMap<String, Long> Disabled = new ConcurrentHashMap<>();    // 失败节点
 
-    static ConcurrentLinkedQueue<String> Heartbeats = new ConcurrentLinkedQueue<>();    // 收到的容器广播消息：
-                                                                                        // ip#port[|waiting] : 心跳
-                                                                                        // ip#port|+ : 变更
-                                                                                        // ip#port|- : 关闭
+    static ConcurrentLinkedQueue<String> Heartbeats = new ConcurrentLinkedQueue<>();    // 容器消息
 
     static Set<String>  ActiveContainer = new HashSet<>();              // 活动的容器
-    static long         ClearTimestamp = System.currentTimeMillis();    // 清理过期容器的时间戳
+    static long         ClearTimestamp = System.currentTimeMillis();    // 清理时间戳
 
-    // 加载全部的服务注册表，仅在Context.initJedis()中调用
+    // 加载全部的服务注册表
     static synchronized void loadRegister() throws Exception {
         Map<String, Register.Container> containers = Context.getRegister(Context.REG_CONTAINER, Register.Container.class);
-        // redis中的数据可能是容器在30秒之前更新的，需要将之前100秒之后更新的容器设置为有效
         long t = System.currentTimeMillis();
         if ( containers != null )
             for ( Register.Container ctn : containers.values() )
@@ -50,11 +46,11 @@ class Router {
         }
         return null;
     }
-    /* 处理容器心跳/更新的通知消息，在Timer中轮询调用(30ms) */
+    /* 处理容器心跳 */
     static synchronized void dealHeartbeat() {
         Map<String, Register.Container> containers = Containers;
         Map<String, Register.Container> newest = new HashMap<>();
-        Map<String, Integer> new_wait = new HashMap<>();    // 2021/11/15
+        Map<String, Integer> new_wait = new HashMap<>();
         while ( true ) {
             String msg = Heartbeats.poll();
             if ( msg == null )
@@ -67,41 +63,38 @@ class Router {
                     ctname = msg.substring(0, split);
                     msg = msg.substring(split + 1);
                     if ( "+".equals(msg) )
-                        waiting = -1;   // 容器更新
+                        waiting = -1;
                     else if ( "-".equals(msg) )
-                        waiting = -2;   // 容器关闭
+                        waiting = -2;
                     else {
-                        // 容器心跳
                         try {
                             waiting = Integer.parseInt(msg);
                         } catch (Exception e) {
-                            continue;       // heartbeat格式非法，丢弃
+                            continue;
                         }
                         if (waiting < 0 )
-                            continue;       // heartbeat格式非法，丢弃
+                            continue;
                     }
                 } else if ( split < 0 )
                     ctname = msg;
                 else
-                    continue;               // heartbeat格式非法，丢弃
+                    continue;
 
                 ActiveContainer.add(ctname);
                 if ( waiting >= 0 || waiting == -2 ) {
-                    // 心跳 或 关闭
                     Register.Container ctn = containers == null ? null : containers.get(ctname);
                     if (ctn != null) {
                         if (waiting >= 0) {
                             ctn.Timestamp = System.currentTimeMillis();
                             ctn.Waiting = waiting;
                         } else
-                            ctn.Timestamp = 0;      // 设置"已关闭"
+                            ctn.Timestamp = 0;
                         continue;
                     }
                     if (waiting < 0)
-                        continue;       // 容器关闭且不在Containers中
+                        continue;
                 }
-                // 发现新的容器 或 容器更新
-                new_wait.put(ctname, waiting);  // 2021/11/15 先记录下来，消息都处理完成后再loadOneRegister()
+                new_wait.put(ctname, waiting);
             } catch (Exception e) {
                 Context.log(LogUtil.ERROR, "heartbeat:" + msg, e);
             }
@@ -110,14 +103,13 @@ class Router {
         if ( !new_wait.isEmpty() ) {
             if ( containers != null )
                 for ( Map.Entry<String, Register.Container> entry : containers.entrySet() )
-                    newest.put(entry.getKey(), entry.getValue());   // 复制原有的Register
-            // 加载新的Register
+                    newest.put(entry.getKey(), entry.getValue());
             for ( Map.Entry<String, Integer> entry : new_wait.entrySet() ) {
                 String ctname = entry.getKey();
                 Register.Container ctnew = loadOneRegister(ctname);
                 if ( ctnew == null )
                     continue;
-                ctnew.Timestamp = System.currentTimeMillis();   // 修正心跳时间为本机时间
+                ctnew.Timestamp = System.currentTimeMillis();
                 int wait = entry.getValue();
                 if ( wait >= 0 )
                     ctnew.Waiting = wait;
@@ -126,7 +118,6 @@ class Router {
             Containers = newest;
         }
 
-        // 清理过期的容器（超过10秒未收到心跳）
         if ( System.currentTimeMillis() - ClearTimestamp > Context.BEATHEART_RECV * 1000 && Containers != null ) {
             containers = Containers;
             newest = new HashMap<>();
@@ -144,13 +135,12 @@ class Router {
                 } catch (Exception e) { }
                 Containers = newest;
             }
-            // 重新开始记录活动心跳
             ActiveContainer.clear();
             ClearTimestamp = System.currentTimeMillis();
         }
     }
 
-    /* 记录连接失败节点的时间戳 */
+    /* 记录失败节点 */
     static void disableRegister(String addr, boolean disable) {
         if ( disable )
             Disabled.put(addr, System.currentTimeMillis());
@@ -158,13 +148,12 @@ class Router {
             Disabled.remove(addr);
     }
 
-    static Register.Router[] LocalTable; // 本地路由配置，按照Service/Entry长度降序配列
+    static Register.Router[] LocalTable; // 本地路由配置
 
-    /* 根据路由配置获得[host, port]，如果仅返回1个元素，则表示Mock的结果 */
+    /* 路由算法 */
     static Object[] getServer(String service, String entry, int vmin, int vmax, int vrel) throws Exception {
-        Map<String, Register.Container> containers = Containers;    // 排除数据动态变化的影响
-        Register.Router[] tables = LocalTable;   // 排除数据动态变化的影响
-        // 检查本地路由
+        Map<String, Register.Container> containers = Containers;
+        Register.Router[] tables = LocalTable;
         if ( tables != null ) {
             for ( int i = 0; i < tables.length; i ++ ) {
                 if ( !Util.matchString(service, tables[i].Service) )
@@ -196,7 +185,7 @@ class Router {
                 return selectNode(lnodes, true);
             }
         }
-        // 检查动态路由
+
         if ( containers != null ) {
             List<Register.Node> nodes = new ArrayList<>();
             long t = System.currentTimeMillis();
@@ -207,7 +196,7 @@ class Router {
                 reg_ctns.put(ctn_name, "not found or inactived");
                 Register.Service ms = container.Services.get(service);
                 if ( ms == null || ms.Status != 1 )
-                    continue;       // 未找到服务或服务不正常
+                    continue;
                 reg_ctns.put(ctn_name, "version mismatch");
                 if ( vmin > 0 && ms.Version < vmin )
                     continue;
@@ -225,7 +214,7 @@ class Router {
                 reg_ctns.put(ctn_name, "disabled");
                 Long disabled = Disabled.get(ctn_name);
                 if ( disabled != null && disabled > container.Timestamp )
-                    continue;       // 连接失败后没有重新注册
+                    continue;
                 Register.Node node = new Register.Node();
                 try {
                     String[] hp = ctn_name.split("#");
@@ -233,11 +222,11 @@ class Router {
                     node.Port = Integer.parseInt(hp[1]);
                     reg_ctns.put(ctn_name, "overload");
                     if ( container.Waiting >= container.Overload )
-                        continue;       // 已经满负载
+                        continue;
                     int wait = container.Waiting == 0 ? 1 : container.Waiting;
-                    node.Weight = (double)container.Overload / wait;    // 根据负载情况计算权重
+                    node.Weight = (double)container.Overload / wait;
                     if ( t - container.Timestamp > Context.BEATHEART_RECV * 1000 / 2 )
-                        node.Weight /= 2;   // 容器不太健康，降低权重
+                        node.Weight /= 2;
                 } catch (Exception e) {
                     Context.log(LogUtil.ERROR, "router-" + service, e.toString());
                     continue;
@@ -254,7 +243,7 @@ class Router {
         throw new Context.ResultException(ErrorCode.ROUTER, "no valid routing path for " + service);
     }
 
-    // 根据权重选择容器
+    // 选择容器
     static Object[] selectNode(Register.Node[] nodes, boolean checkDisable) {
         if ( nodes.length == 1 )
             return new Object[] { nodes[0].Host, nodes[0].Port };
@@ -267,19 +256,19 @@ class Router {
                 Long dt = Disabled.get(nodes[i].Host + "#" + nodes[i].Port);
                 if ( dt != null ) {
                     if ( t - dt < Context.TimeoutReconnect * 1000 )
-                        weight[i] = 0;      // 节点曾经失败，未到超时重试时间
+                        weight[i] = 0;
                     else
-                        weight[i] /= 2;     // 节点曾经失败，到了超时重试时间
+                        weight[i] /= 2;
                 }
             }
-            sum += weight[i];     // 总权重
+            sum += weight[i];
         }
         for ( int i = 1; i < weight.length; i ++ )
             weight[i] += weight[i-1];
-        sum = Math.random() * sum;        // 随机数
+        sum = Math.random() * sum;
         for ( int i = 0; i < weight.length; i ++ )
             if ( weight[i] >= sum )
-                return new Object[] { nodes[i].Host, nodes[i].Port };   // 根据权重分布随机选择节点（权重高的概率更高）
+                return new Object[] { nodes[i].Host, nodes[i].Port };
         return new Object[] { nodes[0].Host, nodes[0].Port };
     }
 }

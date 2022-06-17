@@ -24,15 +24,15 @@ public class ServiceContext {
 
     Channel     Sock;
     InetAddress Remote;
-    String      ReqID;          // 请求的ID，不能为null和""
+    String      ReqID;          // 请求的ID
     Map<String,Object> Header;  // 请求头
-    String      Service;        // 服务名字，不能为null，""表示访问"容器"
-    String      Entry;          // 方法名字，不能为null和""
-    Object[]    Param;          // 参数，第1个必须为String，表示方法名字，不能为null
-    byte        Flag;           // 标志，详见Context.FLAG_XXX
+    String      Service;        // 服务名字
+    String      Entry;          // 方法名字
+    Object[]    Param;          // 参数
+    byte        Flag;           // 标志
 
     boolean     Forwarded;      // 是否已转发
-    String      Filter;         // 过滤器的类名字，非null表示正在执行过滤器
+    String      Filter;         // 过滤器的类名字
     boolean     Result = false;                 // 是否已经有结果
     int         ResultCode = ErrorCode.OK;      // 结果代码
     Object      ResultData = null;              // 结果数据 或 异常
@@ -313,7 +313,7 @@ public class ServiceContext {
             return false;       // 过滤对LOG_SERVICE的请求日志
         if ( (Flag & Context.FLAG_LOG) != 0 )
             return true;
-        Config.LogAccess[] logForce = Bootstrap.LogForce;   // 防止变量重置
+        Config.LogAccess[] logForce = Bootstrap.LogForce;
         if ( logForce == null || logForce.length == 0 )
             return false;
         for ( Config.LogAccess la : logForce )
@@ -331,7 +331,7 @@ public class ServiceContext {
                 context.setVersion(depend.VerMin, depend.VerMax, depend.Release);
         }
         if ( isForceLog() )
-            context.setSeqID(ReqID);    // 强制记录跟踪请求日志
+            context.setSeqID(ReqID);
         return context;
     }
     /* 转发请求 */

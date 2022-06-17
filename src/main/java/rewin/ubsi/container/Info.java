@@ -25,8 +25,8 @@ public class Info {
         public String   tips;               // 说明
         public String   version;            // 版本
         public boolean  release;            // 发行状态
-        public int      status;             // 运行状态：0:未运行，1:运行，-1:暂停，-2:单例等待(仅限于Service)
-        public int      time_status;        // 状态的时间，秒数
+        public int      status;             // 运行状态
+        public int      time_status;        // 状态的时间
         public boolean  dealing_timeout;    // 正在处理的请求中是否有超时的
     }
 
@@ -90,13 +90,13 @@ public class Info {
 
     /** 正在处理的请求 */
     public static class Deal {
-        public long     time_all;       // 总用时，毫微秒(nano)
-        public long     time_deal;      // 处理用时，毫微秒(nano)
-        public String   filter;         // 过滤器：class_name
+        public long     time_all;       // 总用时
+        public long     time_deal;      // 处理用时
+        public String   filter;         // 过滤器
         public String   service;        // 服务名字
         public String   entry;          // 接口名字
-        public int      interceptor;    // 拦截器，-1:Before()，1:After()
-        public int      timeout;        // 超时设置，秒数
+        public int      interceptor;    // 拦截器
+        public int      timeout;        // 超时设置
         public String   client;         // 客户端名字/IP
     }
 
@@ -114,9 +114,9 @@ public class Info {
         public String   name;           // 接口名字
         public String   tips;           // 接口说明
         public List<Param> params;      // 参数列表
-        public Result   result;         // 返回值，null表示void方法
+        public Result   result;         // 返回值
         public boolean  readonly;       // 是否读接口
-        public int      timeout;        // 超时设置，秒数
+        public int      timeout;        // 超时设置
 
         public void load(Method method, USEntry use) {
             name = method.getName();
@@ -153,7 +153,7 @@ public class Info {
         public int      dealing;        // 正在处理的请求数量
         public long     deal_over;      // 处理完成的数量
         public long     deal_error;     // 错误的数量
-        public long     max_time;       // 最长处理时间，毫秒数
+        public long     max_time;       // 最长处理时间
         public String   req_id;         // 最长处理时间的请求ID
     }
 
@@ -161,7 +161,7 @@ public class Info {
     public static class Depend {
         public String   version_min;    // 最小版本号
         public String   version_max;    // 最大版本号
-        public int      release = -2;   // 1:必须依赖正式版本，0:必须依赖非正式版本，-1:不限
+        public int      release = -2;   // 发行状态
     }
 
     /** 微服务注册信息 */
@@ -206,14 +206,14 @@ public class Info {
 
     /** ACL访问控制项 */
     public static class Acl {
-        public String               name;           // 服务名字的前缀，"*"表示通配符，但不包括""(Controller)
-        public String               default_auth;   // 指定服务的缺省权限，"rw"分别表示允许读/写标志
+        public String               name;           // 服务名字的前缀
+        public String               default_auth;   // 指定服务的缺省权限
         public Map<String, String>  spec_auth;      // 指定主机的访问权限
     }
     /** ACL访问控制表 */
     public static class AclTable {
         public Set<String>  accept_host;            // 允许接入的主机地址
-        public String       default_auth;           // 所有服务的缺省权限，"rw"分别表示允许读/写标志
+        public String       default_auth;           // 所有服务的缺省权限
         public List<Acl>    services;               // 各个服务的ACL配置项
     }
 

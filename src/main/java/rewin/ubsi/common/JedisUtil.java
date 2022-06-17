@@ -7,17 +7,13 @@ import java.util.*;
 
 /**
  * Redis客户端工具
- *      支持Redis 3.x以上，依赖Jedis 3.x
- *      支持Standalone/Sentinel模式
- *      不支持客户端Shard和服务器cluster模式
- *      不支持ssl模式
  */
 public class JedisUtil {
 
     /** 缺省使用的数据库 */
     public final static int DATABASE = 3;
 
-    final static int TIMEOUT = 10;                          // 连接/响应的超时时间（秒）
+    final static int TIMEOUT = 10;                          // 连接/响应的超时时间
     final static String CHANNEL_EVENT = "_ubsi_event_";
 
     static Pool<Jedis> JedisPools = null;       // 连接池
@@ -66,7 +62,6 @@ public class JedisUtil {
                     EventListener.put(channel, this);
                 }
             }
-            // 处理历史遗留的事件
             try (Jedis jedis = JedisPools.getResource()) {
                 for ( String channel : channels ) {
                     if (channel == null || channel.isEmpty())
@@ -74,7 +69,7 @@ public class JedisUtil {
                     while (true) {
                         byte[] data = jedis.rpop((CHANNEL_EVENT + ":" + channel).getBytes());
                         if (data == null)
-                            break;      // 没有新的事件
+                            break;
                         try { this.onEvent(channel, Codec.decodeBytes(data)); } catch (Exception e) {}
                     }
                 }
@@ -200,7 +195,6 @@ public class JedisUtil {
         @Override
         public void onMessage(String channel, String message) {
             if ( CHANNEL_EVENT.equals(channel) ) {
-                // 事件处理
                 Listener listener = null;
                 synchronized (EventListener) {
                     listener = EventListener.get(message);
@@ -211,13 +205,12 @@ public class JedisUtil {
                     while ( true ) {
                         byte[] data = jedis.rpop((CHANNEL_EVENT + ":" + message).getBytes());
                         if ( data == null )
-                            break;      // 没有新的事件
+                            break;
                         try { listener.onEvent(message, Codec.decodeBytes(data)); } catch (Exception e) {}
                     }
                 } catch (Exception e) {}
                 return;
             }
-            // 消息处理
             Listener[] listeners = null;
             synchronized (ChannelListener) {
                 Set<Listener> set = ChannelListener.get(channel);
@@ -236,7 +229,6 @@ public class JedisUtil {
 
         @Override
         public void onPMessage(String pattern, String channel, String message) {
-            // 模式消息处理
             Listener[] listeners = null;
             synchronized (PatternListener) {
                 Set<Listener> set = PatternListener.get(pattern);
@@ -254,7 +246,7 @@ public class JedisUtil {
         }
     }
 
-    // 重新恢复消息订阅
+    // 消息订阅
     static void resubscribe() throws Exception {
         synchronized (ChannelListener) {
             Set<String> channels = ChannelListener.keySet();
@@ -266,7 +258,6 @@ public class JedisUtil {
             if ( !channels.isEmpty() )
                 try { JedisSubscriber.psubscribe(channels.toArray(new String[channels.size()])); } catch (Exception e) {}
         }
-        // 处理历史遗留的事件
         synchronized (EventListener) {
             Set<String> channels = EventListener.keySet();
             if ( !channels.isEmpty() ) {
@@ -279,7 +270,7 @@ public class JedisUtil {
                             while (true) {
                                 byte[] data = jedis.rpop((CHANNEL_EVENT + ":" + channel).getBytes());
                                 if (data == null)
-                                    break;      // 没有新的事件
+                                    break;
                                 listener.onEvent(channel, Codec.decodeBytes(data));
                             }
                         } catch (Exception e) {}
@@ -298,13 +289,13 @@ public class JedisUtil {
         new Thread(new Runnable() {
             public void run() {
                 try (Jedis jedis = JedisPools.getResource()) {
-                    jedis.subscribe(JedisSubscriber, CHANNEL_EVENT);    // 阻塞，等待消息，直到unsubscribe()
+                    jedis.subscribe(JedisSubscriber, CHANNEL_EVENT);
                 } catch (Exception e) {
                     JedisInitException = e;
                 }
-                close();    // Redis监听停止了
+                close();
             }
-        }).start();     // 启动Jedis订阅线程
+        }).start();
         for ( int i = 0; i <= TIMEOUT; i ++ ) {
             if ( JedisInitException != null ) {
                 new Thread(new Runnable() {
@@ -315,7 +306,7 @@ public class JedisUtil {
                 throw JedisInitException;
             }
             if ( JedisSubscriber.isSubscribed() ) {
-                resubscribe();  // 恢复消息订阅
+                resubscribe();
                 return;
             }
             try { Thread.sleep(1000); } catch (Exception e) {}
@@ -335,7 +326,7 @@ public class JedisUtil {
         config.setMaxIdle(max_idle);
         config.setMaxTotal(max_conn);
         config.setTestOnBorrow(true);
-        config.setMaxWaitMillis(TIMEOUT * 1000);    // 设置获取连接的最大等待时间（否则会卡死） -- 2022/01/21
+        config.setMaxWaitMillis(TIMEOUT * 1000);
         return config;
     }
 
@@ -365,7 +356,7 @@ public class JedisUtil {
             synchronized (JedisSubscriber) {
                 JedisSubscriber.unsubscribe();
                 if ( !PatternListener.isEmpty() )
-                    JedisSubscriber.punsubscribe();     // 不能直接调用，否则JedisPool.close()时会报WARN
+                    JedisSubscriber.punsubscribe();
                 for (int i = 0; i <= TIMEOUT; i++) {
                     if (!JedisSubscriber.isSubscribed())
                         break;
@@ -378,17 +369,6 @@ public class JedisUtil {
             JedisPools.close();
             JedisPools = null;
         }
-        /** 由于存在自动重连机制，保留所有的消息监听器
-        synchronized (ChannelListener) {
-            ChannelListener.clear();
-        }
-        synchronized (PatternListener) {
-            PatternListener.clear();
-        }
-        synchronized (EventListener) {
-            EventListener.clear();
-        }
-         */
         JedisSubscriber = null;
     }
 

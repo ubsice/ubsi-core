@@ -74,8 +74,8 @@ class LibManager {
 
     /* LIB加载器 */
     static class Loader {
-        URLClassLoader  loader;         // JAR文件名
-        int             refCount;       // 依赖关系
+        URLClassLoader  loader;
+        int             refCount;
     }
 
     /* 初始化 */

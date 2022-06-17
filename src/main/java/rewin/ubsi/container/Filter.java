@@ -20,8 +20,8 @@ class Filter {
     /** 依赖关系定义 */
     static class Depend {
         int     VerMin;             // 最小版本
-        int     VerMax;             // 最大版本，0表示不限
-        int     Release;            // 是否正式版本，1:是，0:不是，-1:不限
+        int     VerMax;             // 最大版本
+        int     Release;            // 是否正式版本
     }
 
     Info.GAV    JarLib;             // 依赖的JAR包
@@ -41,8 +41,8 @@ class Filter {
     Method      EntryConfigGet;     // 读取配置接口
     Method      EntryConfigSet;     // 更改配置接口
 
-    volatile int Status = 0;        // 状态，0:未运行，1:运行，-1:暂停，-2:单例等待(仅限于Service)
-    int         TimeStatus = 0;     // 状态的时间戳(秒)
+    volatile int Status = 0;        // 状态
+    int         TimeStatus = 0;     // 状态的时间戳
 
     /** 启动 */
     synchronized boolean start(String name) throws Exception {

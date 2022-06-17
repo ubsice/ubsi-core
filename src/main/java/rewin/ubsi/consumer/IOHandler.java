@@ -35,7 +35,7 @@ class IOHandler extends ChannelInboundHandlerAdapter {
         if ( evt instanceof IdleStateEvent ) {
             IdleStateEvent event = (IdleStateEvent)evt;
             if ( event.state().equals(IdleState.WRITER_IDLE) )
-                ctx.writeAndFlush(Unpooled.wrappedBuffer(BEATHEART_DATA));	// 发送心跳
+                ctx.writeAndFlush(Unpooled.wrappedBuffer(BEATHEART_DATA));
         } else
             super.userEventTriggered(ctx, evt);
     }
@@ -106,10 +106,10 @@ class IOHandler extends ChannelInboundHandlerAdapter {
         if ( IOBootstrap != null && host != null && !host.trim().isEmpty() ) {
             try {
                 ChannelFuture f = IOBootstrap.connect(host, port).sync();
-                Router.disableRegister(host.toLowerCase() + "#" + port, false);     // 标记节点正常
+                Router.disableRegister(host.toLowerCase() + "#" + port, false);
                 return f.channel();
             } catch (Exception e) {}
-            Router.disableRegister(host.toLowerCase() + "#" + port, true);          // 标记节点异常
+            Router.disableRegister(host.toLowerCase() + "#" + port, true);
         }
         throw new Context.ResultException(ErrorCode.CONNECT, "connect to " + host + "#" + port + " error");
     }

@@ -18,8 +18,8 @@ public class ScriptUtil {
 
     /** 输出信息 */
     public static class Message {
-        public long     time;   // 时间戳，毫秒数
-        public int      type;   // 消息类别，LogUtil.DEBUG | INFO | ERROR
+        public long     time;   // 时间戳
+        public int      type;   // 消息类别
         public String   text;   // 消息内容
     }
 
@@ -77,13 +77,13 @@ public class ScriptUtil {
         return "NONE";
     }
 
-    String  Host = null;        // direct模式的主机名字，null表示路由模式
+    String  Host = null;        // 主机名字
     int     Port = 7112;
     int     VerMin = 0;
     int     VerMax = 0;
     int     VerRel = -1;
     Map     Header = null;
-    int     Timeout = -1;       // 缺省的超时时间，0表示不限
+    int     Timeout = -1;       // 缺省的超时时间
 
     boolean Async = false;          // 是否异步方式
     boolean HasResult = false;      // 是否设置了结果
@@ -113,7 +113,7 @@ public class ScriptUtil {
         serviceContext = ctx;
     }
 
-    /** 设置请求路径，host为null表示路由模式 */
+    /** 设置请求路径 */
     public void host(String host, int port) {
         Host = host;
         Port = port;

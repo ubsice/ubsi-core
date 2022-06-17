@@ -62,15 +62,14 @@ class Service extends Filter {
             // 抢先启动
             boolean locked = false;
             try {
-                locked = Singleton.lockStart(name, true);   // 通过redis设置同步锁，key保留1分钟
+                locked = Singleton.lockStart(name, true);
                 if ( locked )
                     return super.start(name);
             } finally {
                 if ( locked )
-                    Singleton.lockStart(name, false);       // redis解锁，key多保留1秒钟，保证注册信息能够被更新
+                    Singleton.lockStart(name, false);
             }
         }
-        // 不能启动
         if ( Status == 0 ) {
             TimeStatus = (int)(System.currentTimeMillis() / 1000);     // 状态时间
             Status = -2;
@@ -139,7 +138,6 @@ class Service extends Filter {
             // 微服务注册
             long t = System.currentTimeMillis();
             if ( FlushRegister || (t - TimestampRegister > Context.REGISTER_TIMEOUT) ) {
-                // 正常情况每30秒刷新全量注册信息
                 Set<String>[] timeouts = WorkHandler.getTimeoutDeal();
                 Register.Container container = new Register.Container();
                 container.Gateway = Bootstrap.Forward > 0;
@@ -192,13 +190,12 @@ class Service extends Filter {
                         container.Filters.add(rf);
                     }
                 }
-                // 发布数据到Redis
                 String which = Bootstrap.Host + "#" + Bootstrap.Port;
                 try {
                     Context.setRegister(Context.REG_CONTAINER, which, container);
                     if ( FlushRegister ) {
-                        JedisUtil.publish(Context.CHANNEL_NOTIFY, which + "|+");    // 广播容器变更
-                        TimestampHeartbeat = System.currentTimeMillis();            // 不必重复广播心跳
+                        JedisUtil.publish(Context.CHANNEL_NOTIFY, which + "|+");
+                        TimestampHeartbeat = System.currentTimeMillis();
                     }
                 } catch (Exception e) {
                     Bootstrap.log(LogUtil.ERROR, "register", e);
@@ -207,9 +204,7 @@ class Service extends Filter {
                 FlushRegister = false;
             }
 
-            // 心跳广播
             if ( !FlushRegister && (System.currentTimeMillis() - TimestampHeartbeat >= Context.BEATHEART_SEND * 1000)) {
-                // 正常情况每3秒发送一次心跳
                 String notify = Bootstrap.Host + "#" + Bootstrap.Port;
                 int waiting = (int)(Bootstrap.RequestTotal.get() - Bootstrap.RequestDeal.get());
                 if ( waiting > 0 )

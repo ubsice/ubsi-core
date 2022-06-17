@@ -16,21 +16,19 @@ import java.util.concurrent.TimeUnit;
  */
 class WorkHandler implements Runnable {
 
-    /* 正在处理的请求 */
     static class Deal {
-        public long     StartTime = System.nanoTime();      // 开始时间戳，毫微秒
+        public long     StartTime = System.nanoTime();      // 开始时间戳
         public String   InFilter = null;    // 过滤器
-        public long     DealTime;           // 开始处理的时间戳，毫微秒
-        public int      Interceptor = 0;    // 拦截器，-1:Before()，1:After()
-        public int      Timeout = 0;        // 超时设置，秒数，0表示不在外部模块(Service/Filter)中
+        public long     DealTime;           // 开始处理的时间戳
+        public int      Interceptor = 0;    // 拦截器
+        public int      Timeout = 0;        // 超时设置，秒数
         public String   Service;            // 服务名字
         public String   Entry;              // 接口名字
         public String   Client;             // 客户端名字/IP
     }
 
-    static ConcurrentMap<String, Deal>  Dealing = new ConcurrentHashMap<>();  // 正在处理中的请求
+    static ConcurrentMap<String, Deal>  Dealing = new ConcurrentHashMap<>();
 
-    /* 获得超时的处理动作，返回：[ 超时的service，超时的filter ] */
     static Set<String>[] getTimeoutDeal() {
         Set<String>[] res = new Set[] { new HashSet<String>(), new HashSet<String>() };
         for ( Deal deal : Dealing.values() ) {
@@ -45,7 +43,6 @@ class WorkHandler implements Runnable {
         return res;
     }
 
-    /* 检查指定的服务/过滤器是否有正在处理的任务 */
     static boolean isDealing(String name) {
         for ( Deal deal : Dealing.values() ) {
             synchronized (deal) {
@@ -58,7 +55,6 @@ class WorkHandler implements Runnable {
         return false;
     }
 
-    /* 删除指定service的任务 */
     static void clearDealing(String name) {
         List<String> list = new ArrayList<>();
         for ( String key : Dealing.keySet() ) {
@@ -84,7 +80,6 @@ class WorkHandler implements Runnable {
             return;
         Object[] filters = Bootstrap.FilterList.toArray();
         if ( interceptor > 0 ) {
-            // 数组反转
             for ( int i = 0; i < filters.length / 2; i ++ ) {
                 Object f = filters[i];
                 filters[i] = filters[filters.length - 1 - i];
@@ -136,7 +131,6 @@ class WorkHandler implements Runnable {
         if ( isForceLog )
             Bootstrap.log(LogUtil.ACCESS, "enter", new LogBody.Enter(SContext.ReqID, SContext.Service, SContext.Entry, SContext.Flag, deal.Client));
 
-        // 检测是否需要熔断
         if ( Bootstrap.TimeoutFuse > 0 ) {
             int timeout_count = 0;
             for ( Deal dealing : Dealing.values() ) {
@@ -167,7 +161,6 @@ class WorkHandler implements Runnable {
                 if (Bootstrap.Forward == 0)
                     SContext.setResult(ErrorCode.NOSERVICE, "service \"" + SContext.Service + "\" not found");
                 else {
-                    // 转发请求
                     Bootstrap.RequestForward.incrementAndGet();
                     try {
                         SContext.Param[0] = SContext.Entry;
@@ -181,7 +174,7 @@ class WorkHandler implements Runnable {
                 // 服务状态异常
                 SContext.setResult(ErrorCode.STOP, SContext.Service + (srv.Status == 0 ? " not start" : (srv.Status == -2 ? " waiting start" : " paused")));
             } else {
-                doFilter(deal, -1);     // 调用filter的before()
+                doFilter(deal, -1);
                 synchronized (deal) {
                     deal.InFilter = null;
                     deal.Interceptor = 0;
@@ -199,7 +192,7 @@ class WorkHandler implements Runnable {
                             SContext.setResult(ErrorCode.REJECT, SContext.Service + "#" + SContext.Entry + "() access denied"); // 拒绝访问
                         else {
                             entry.RequestDeal.incrementAndGet();
-                            Object o = null;    // 服务实例
+                            Object o = null;
                             long t = 0;
                             boolean interceptor = false;
                             try {
@@ -211,7 +204,7 @@ class WorkHandler implements Runnable {
                                         deal.DealTime = System.nanoTime();
                                     }
                                     interceptor = true;
-                                    srv.EntryBefore.invoke(o, SContext);     // 前置接口
+                                    srv.EntryBefore.invoke(o, SContext);
                                     interceptor = false;
                                 }
                                 if (!SContext.Result) {
@@ -223,11 +216,11 @@ class WorkHandler implements Runnable {
                                         deal.DealTime = System.nanoTime();
                                     }
                                     t = System.currentTimeMillis();
-                                    Object res = entry.JMethod.invoke(o, SContext.Param); // 调用服务接口
+                                    Object res = entry.JMethod.invoke(o, SContext.Param);
                                     t = System.currentTimeMillis() - t;
                                     SContext.setResultData(res);
                                 }
-                            } catch (Exception e) { // 接口异常
+                            } catch (Exception e) {
                                 entry.RequestError.incrementAndGet();
                                 srv.RequestError.incrementAndGet();
                                 SContext.setResultException(e);
@@ -240,7 +233,7 @@ class WorkHandler implements Runnable {
                                         deal.DealTime = System.nanoTime();
                                     }
                                     try {
-                                        srv.EntryAfter.invoke(o, SContext);      // 后置接口
+                                        srv.EntryAfter.invoke(o, SContext);
                                     } catch (Exception e) {
                                         SContext.setResultException(e);
                                         Bootstrap.log(LogUtil.ERROR, deal.Service + "#" + deal.Entry + "()@After", e);
@@ -255,7 +248,7 @@ class WorkHandler implements Runnable {
                     }
                     srv.RequestOver.incrementAndGet();
                 }
-                doFilter(deal, 1);      // 调用filter的after()
+                doFilter(deal, 1);
                 synchronized (deal) {
                     deal.InFilter = null;
                     deal.Interceptor = 0;

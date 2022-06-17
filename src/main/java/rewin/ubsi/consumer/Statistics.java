@@ -14,7 +14,7 @@ class Statistics {
     AtomicLong  request = new AtomicLong(0);    // 计数器：总发送次数
     AtomicLong  result = new AtomicLong(0);     // 计数器：总返回次数
     AtomicLong  success = new AtomicLong(0);    // 计数器：总正常处理次数
-    AtomicLong  max_time = new AtomicLong(0);   // 计时器：最长的处理时间（毫秒）
+    AtomicLong  max_time = new AtomicLong(0);   // 计时器：最长的处理时间
     String      request_id = null;              // 最长处理时间的请求ID
 
     static ConcurrentMap<String, ConcurrentMap<String, Statistics>> Records = new ConcurrentHashMap<>();

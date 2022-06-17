@@ -39,16 +39,15 @@ public class Bootstrap {
     final static int MAX_FORWARD = 600;
     final static int MIN_FORWARD = 0;
 
-    static String   Host;               // 本机的主机名（转换为小写；注：为兼容IPV4/6，请不要使用IP地址）
+    static String   Host;               // 本机的主机名
     static int      Port = 7112;        // 监听的端口
     static int      BackLog = 128;      // 监听端口的等待队列
 
-    static int      IOThreads = 0;      // I/O线程数，包括bossGroup/workerGroup(使用同一个NioEventLoopGroup)
-                                        // 0表示默认netty线程数：CPU内核数 * 2
-    static int      WorkThreads = 20;   // 工作线程数，必须>0
-    static int      TimeoutFuse = 0;    // 当前接口超时的数量N个后熔断，0表示不熔断
-    static int      Overload = 100;     // 等待处理请求的最大数量，必须>0
-    static int      Forward = 60;       // 转发请求的超时时间(秒)，0:不转发
+    static int      IOThreads = 0;      // I/O线程数
+    static int      WorkThreads = 20;   // 工作线程数
+    static int      TimeoutFuse = 0;    // 当前接口超时的数量N个后熔断
+    static int      Overload = 100;     // 等待处理请求的最大数量
+    static int      Forward = 60;       // 转发请求的超时时间
     static List<Info.ForwardService> ForwardDoor = null;// 需注册的"转发"微服务
 
     static Channel MainChannel = null;              // 端口监听Socket
@@ -169,8 +168,8 @@ public class Bootstrap {
         }
         try {   // 删除注册表项
             String reg_key = Bootstrap.Host + "#" + Bootstrap.Port;
-            Context.delRegister(Context.REG_CONTAINER, reg_key);        // 删除redis注册项
-            JedisUtil.publish(Context.CHANNEL_NOTIFY, reg_key + "|-");  // 发送"关闭"的广播消息
+            Context.delRegister(Context.REG_CONTAINER, reg_key);
+            JedisUtil.publish(Context.CHANNEL_NOTIFY, reg_key + "|-");
         } catch (Exception e) {}
 
         try { ServiceMap.get("").stop(""); } catch (Exception e) {}     // 关闭控制器

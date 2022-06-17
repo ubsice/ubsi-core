@@ -13,18 +13,18 @@ public class Config {
 
     /** Consumer当前的运行参数 */
     public static class Consumer {
-        public int          io_threads = Context.IOThreads;             // I/O线程的数量，0表示"CPU内核数 * 2"
-        public String       redis_host;                                 // Redis服务的主机名（单机模式）
-        public int          redis_port = Context.RedisPort;             // Redis服务的端口号（单机模式）
+        public int          io_threads = Context.IOThreads;             // I/O线程的数量
+        public String       redis_host;                                 // Redis服务的主机名
+        public int          redis_port = Context.RedisPort;             // Redis服务的端口号
         public String       redis_master_name;                          // Redis哨兵模式的master名字
-        public Set<String>  redis_sentinel_addr;                        // Redis哨兵模式的节点地址，格式"host:port"，多个
+        public Set<String>  redis_sentinel_addr;                        // Redis哨兵模式的节点地址
         public String       redis_password;                             // Redis服务的访问密码
         public int          redis_conn_idle = Context.RedisMaxIdle;     // Redis连接池的最大空闲数量
         public int          redis_conn_max = Context.RedisMaxConn;      // Redis连接池的最大数量
 
-        public int          timeout_connect = Context.TimeoutConnection;    // 缺省的连接超时时间，秒
-        public int          timeout_request = Context.TimeoutRequest;       // 缺省的请求超时时间，秒
-        public int          timeout_reconnect = Context.TimeoutReconnect;   // 连接失败后重新尝试的间隔时间，秒
+        public int          timeout_connect = Context.TimeoutConnection;    // 缺省的连接超时时间
+        public int          timeout_request = Context.TimeoutRequest;       // 缺省的请求超时时间
+        public int          timeout_reconnect = Context.TimeoutReconnect;   // 连接失败后重新尝试的间隔时间
 
         public List<String> filters;        // 请求过滤器的类名字
     }
@@ -54,8 +54,8 @@ public class Config {
 
     /** LOG配置项 */
     public static class LogItem {
-        public int      output = -1;        // 输出位置，0x01:Console，0x02:File，0x04:Service，-1:表示使用all设置
-        public String   filename = null;    // 日志文件名前缀，null表示使用all设置
+        public int      output = -1;        // 输出位置
+        public String   filename = null;    // 日志文件名前缀
     }
     /** LOG分类配置 */
     public static class LogOpt {
@@ -66,24 +66,24 @@ public class Config {
         public LogItem  error;
         public LogItem  action;
         public LogItem  access;
-        public LogItem  app;                // 应用自定义分类的设置，null表示使用all设置
+        public LogItem  app;                // 应用自定义分类的设置
     }
     /** LOG强制记录Access的设置 */
     public static class LogAccess {
-        public String service;              // 服务名字，"*"表示通配符，包括""(Controller)
-        public String entry;                // 方法名字，"*"表示通配符，null表示不限
+        public String service;              // 服务名字
+        public String entry;                // 方法名字
     }
     /** LOG配置参数 */
     public static class Log {
         public LogOpt       options;        // 分类配置
         public LogAccess[]  consumer;       // 强制记录consumer请求日志的服务列表
         public LogAccess[]  container;      // 强制记录container请求日志的服务列表
-        public String       slf4j_level;    // slf4j日志输出级别："trace|debug|info|warn|error|none", 默认为warn
-        public String       js_level;       // JavaScript日志输出级别："debug|info|error|none", 默认为debug
+        public String       slf4j_level;    // slf4j日志输出级别
+        public String       js_level;       // JavaScript日志输出级别
     }
     /** LOG文件 */
     public static class LogFile {
-        public String   name;               // 文件名（不包含路径）
+        public String   name;               // 文件名
         public boolean  dir;                // 是否目录
         public long     size;               // 长度
         public long     time;               // 时间

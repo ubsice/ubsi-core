@@ -36,25 +36,25 @@ public class LogUtil {
 
     public static String    File_Path = "logs";     // 日志文件的路径
     public static String    Field_Separator = "\t"; // 缺省的字段分隔符
-    public static int       File_Separator = 1;     // 文件分割方式，0:不分割，1:按月分割，2:按天分割
+    public static int       File_Separator = 1;     // 文件分割方式
 
     public static String    Default_File = "run";           // 缺省的文件名前缀
-    public static String    Debug_File;                     // 分类日志的文件名前缀，null表示使用Default_File
+    public static String    Debug_File;                     // 分类日志的文件名前缀
     public static String    Info_File;
     public static String    Warn_File;
     public static String    Error_File;
     public static String    Action_File = "opr";
     public static String    Access_File = "req";
-    public static String    App_File = "app";               // 应用自定义分类日志的文件名前缀，null表示使用Default_File
+    public static String    App_File = "app";               // 应用自定义分类日志的文件名前缀
 
     public static int       Default_Output = OUT_CONSOLE;   // 缺省的输出方式
-    public static int       Debug_Output = -1;              // 分类日志的输出方式，<0表示使用Default_Output
+    public static int       Debug_Output = -1;              // 分类日志的输出方式
     public static int       Info_Output = -1;
     public static int       Warn_Output = -1;
     public static int       Error_Output = -1;
     public static int       Action_Output  = -1;
     public static int       Access_Output = -1;
-    public static int       App_Output = -1;                // 应用自定义分类日志的输出方式，<0表示使用Default_Output
+    public static int       App_Output = -1;                // 应用自定义分类日志的输出方式
 
     /* 获得日志类型的显示字符串 */
     static String getType(int type) {
@@ -100,7 +100,7 @@ public class LogUtil {
         void add(Object[] log) {
             Buffer.offer(log);
             if ( Buffer.size() >= 100 )
-                synchronized(this) { this.notifyAll(); }    // 唤醒线程
+                synchronized(this) { this.notifyAll(); }
         }
 
         /* 添加1条日志到日志文件 */
@@ -146,11 +146,11 @@ public class LogUtil {
                         Object data = rec[rec.length - 1];
                         if ( data instanceof Throwable ) {
                             data = Util.getTargetThrowable((Throwable) data);
-                            rec[rec.length - 1] = ((Throwable) data).toString();  // 异常
+                            rec[rec.length - 1] = ((Throwable) data).toString();
                         }
                         if ( (output & OUT_REMOTE) != 0 ) {
                             Context context = Context.request(LOG_SERVICE, LOG_ENTRY, rec);
-                            try { context.callAsync(null, false); } catch (Exception e) {}  // 发送到远程微服务
+                            try { context.callAsync(null, false); } catch (Exception e) {}
                         }
                         if ( (output & OUT_CONSOLE) != 0 || (output & OUT_FILE) != 0 ) {
                             StringBuffer sb = new StringBuffer();
@@ -162,7 +162,6 @@ public class LogUtil {
                                 sb.append(rec[i]);
                             }
                             sb.append(Field_Separator);
-                            // 处理body的输出
                             Object body = rec[rec.length - 1];
                             if ( body instanceof CharSequence ) {
                                 String str = ((CharSequence)body).toString();
@@ -179,19 +178,19 @@ public class LogUtil {
                             }
 
                             String str = sb.toString();
-                            if ( (output & OUT_CONSOLE) != 0 ) {     // 输出到控制台
+                            if ( (output & OUT_CONSOLE) != 0 ) {
                                 System.out.println(str);
                                 if ( data instanceof Throwable )
                                     ((Throwable)data).printStackTrace(System.out);
                             }
-                            if ( (output & OUT_FILE) != 0 )          // 输出到文件
+                            if ( (output & OUT_FILE) != 0 )
                                 try { write(type, str, time, data); } catch (Exception e) {}
                         }
                     } catch (Exception e) {}
                 }
                 if ( !Shutdown ) {
                     synchronized (this) {
-                        try { this.wait(1000); } catch (Exception e) { }   // 等待1秒钟
+                        try { this.wait(1000); } catch (Exception e) { }
                     }
                 }
             }
@@ -212,7 +211,7 @@ public class LogUtil {
         if ( Worker != null ) {
             Worker.Shutdown = true;
             synchronized (Worker) {
-                Worker.notifyAll();     // 唤醒线程
+                Worker.notifyAll();
             }
             long t = System.currentTimeMillis();
             while ( Worker.Running ) {
@@ -234,7 +233,7 @@ public class LogUtil {
                     code += stack[stackIndex].getClassName() + "#" + stack[stackIndex].getMethodName() + "()#" + stack[stackIndex].getLineNumber();
             }
             Object[] rec = new Object[]{   // 每条日志的结构
-                    System.currentTimeMillis(), // long，日志产生的时间戳（毫秒）
+                    System.currentTimeMillis(), // long，日志产生的时间戳
                     type,                       // int，日志分类
                     App_Addr,                   // String，应用所在的位置
                     appTag,                     // String，应用分类

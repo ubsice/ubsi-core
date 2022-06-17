@@ -53,7 +53,7 @@ class ControllerSet extends ControllerGet {
             if ( module == null )
                 throw new Exception("service or filter '" + name + "' not found");
             if ( module.Status == -2 )
-                return;     // 处于单例等待状态，不能"手工"启动
+                return;
             int status = module.Status;
             try {
                 module.stop(name);
@@ -86,15 +86,15 @@ class ControllerSet extends ControllerGet {
         boolean res = false;
         if ( action == 0 ) {
             if ( module.Status == 1 && WorkHandler.isDealing(name) )
-                return false;               // 正常运行且有正在处理的任务，则不能停止
+                return false;
             res = module.stop(name);
         } else if ( action < 0 )
             res = module.pause(true);
         else {
             if ( module.Status == -2 )
-                return false;               // 处于单例等待状态，不能"手工"启动
+                return false;
             if ( module.Status == -1 )
-                res = module.pause(false);  // 取消暂停
+                res = module.pause(false);
             else
                 res = module.start(name);
         }

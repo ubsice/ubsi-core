@@ -15,7 +15,7 @@ import java.util.*;
         name = "",
         tips = "UBSI微服务容器控制器",
         version = "2.3.0",                      // 容器的版本号
-        release = true                          // 容器的发行状态
+        release = false                         // 容器的发行状态（false表示community-edition）
 )
 class Controller extends ControllerModule {
 

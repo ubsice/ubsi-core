@@ -9,12 +9,12 @@ import java.util.*;
  * 微服务访问控制
  */
 class ServiceAcl {
-    String      Name;               // 服务名字的前缀("*"表示通配符)，""表示Container
-    byte        Policy = 0x03;      // 指定服务的整体策略，允许读/写标志，0x01:是否可访问读接口，0x02:是否可访问写接口
-    Map<Integer, Byte> Addr = new HashMap<>();  // 注：两个相同内容的byte[]，其hashCode()是不同的，必须用Arrays.hashCode()
+    String      Name;               // 服务名字的前缀
+    byte        Policy = 0x03;      // 指定服务的整体策略
+    Map<Integer, Byte> Addr = new HashMap<>();
 
-    static int[] AcceptHost = null;         // 允许接入的主机地址(hash值)
-    static ServiceAcl[] AclList = null;     // 访问控制列表，按照Name长度降序排列
+    static int[] AcceptHost = null;         // 允许接入的主机地址
+    static ServiceAcl[] AclList = null;     // 访问控制列表
     static byte         AclPolicy = 0x03;   // 所有服务的整体策略
 
     /* 检查连接的ACL */
@@ -27,7 +27,7 @@ class ServiceAcl {
     /* 检查服务的ACL */
     static boolean check(String service, Service.Entry entry, InetAddress remote) {
         byte policy = AclPolicy;
-        ServiceAcl[] list = AclList;    // 排除数据动态变化的影响
+        ServiceAcl[] list = AclList;
         if ( list != null ) {
             for ( int x = 0; x < list.length; x++ ) {
                 ServiceAcl acl = list[x];

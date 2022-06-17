@@ -51,12 +51,12 @@ public class Context {
         public void after(Context ctx);
     }
 
-    public final static int BEATHEART_RECV = 10;    // 读取心跳的超时时间（秒）
-    public final static int BEATHEART_SEND = 3;     // 发送心跳的超时时间（秒）
+    public final static int BEATHEART_RECV = 10;    // 读取心跳的超时时间
+    public final static int BEATHEART_SEND = 3;     // 发送心跳的超时时间
 
-    public final static long REGISTER_TIMER = 30;           // 定时任务的时间间隔（毫秒）
-    public final static long REQUEST_TIMEOUT = 1000;        // 检查请求超时的时间间隔（毫秒）
-    public final static long REGISTER_TIMEOUT = 30*1000;    // 容器刷新注册信息的时间间隔（毫秒）
+    public final static long REGISTER_TIMER = 30;           // 定时任务的时间间隔
+    public final static long REQUEST_TIMEOUT = 1000;        // 检查请求超时的时间间隔
+    public final static long REGISTER_TIMEOUT = 30*1000;    // 容器刷新注册信息的时间间隔
 
     public final static byte FLAG_DISCARD = 0x01;      // 丢弃结果
     public final static byte FLAG_MESSAGE = 0x02;      // 结果通过消息队列返回
@@ -81,15 +81,15 @@ public class Context {
     final static int MAX_REDISCONN = 128;
     final static int MIN_REDISCONN = 16;
 
-    static int          IOThreads = 0;              // I/O读写线程数，0表示缺省数量：CPU内核数*2
-    static int          TimeoutConnection = 5;      // 新建Socket连接时的超时时间（秒）
-    static int          TimeoutRequest = 10;        // 请求的超时时间（秒）
-    static int          TimeoutReconnect = 600;     // 连接重试的超时时间（秒），包括Redis/Container
+    static int          IOThreads = 0;              // I/O读写线程数
+    static int          TimeoutConnection = 5;      // 新建Socket连接时的超时时间
+    static int          TimeoutRequest = 10;        // 请求的超时时间
+    static int          TimeoutReconnect = 600;     // 连接重试的超时时间
 
-    static String       RedisHost = null;           // Redis主机名（单机模式）
-    static int          RedisPort = 6379;           // Redis端口号（单机模式）
+    static String       RedisHost = null;           // Redis主机名
+    static int          RedisPort = 6379;           // Redis端口号
     static String       RedisMasterName = null;     // Redis哨兵模式的master名字
-    static Set<String>  RedisSentinelAddr = null;   // Redis哨兵模式的节点地址，格式"host:port"
+    static Set<String>  RedisSentinelAddr = null;   // Redis哨兵模式的节点地址
     static String       RedisPassword = null;       // Redis密码
     static int          RedisMaxIdle = 8;           // Redis连接池的最大空闲数量
     static int          RedisMaxConn = 128;         // Redis连接池的最大数量
@@ -140,7 +140,7 @@ public class Context {
         } catch (ResultException e) {
             if (e.Code != ErrorCode.CONNECT)
                 throw e;
-            server = context.getRouter();     // 重新获取路由，重试一次
+            server = context.getRouter();
             ch = Connector.get((String)server[0], (Integer)server[1]);
         }
 
@@ -241,7 +241,7 @@ public class Context {
             else if (RedisHost != null)
                 JedisUtil.init(RedisHost, RedisPort, RedisPassword, RedisMaxIdle, RedisMaxConn);
             else
-                return;             // 未配置Jedis
+                return;
 
             Router.loadRegister();  // 加载服务注册表
 
@@ -253,9 +253,9 @@ public class Context {
                             if (message == null)
                                 return;
                             if (message instanceof String)
-                                Router.Heartbeats.offer((String)message);   // 容器心跳
+                                Router.Heartbeats.offer((String)message);
                             else if (message instanceof Object[])
-                                Connector.setMessageResponse(message);  // 请求结果
+                                Connector.setMessageResponse(message);
                         } catch (Exception e) {
                             log(LogUtil.ERROR, "message", e);
                         }
@@ -264,7 +264,7 @@ public class Context {
                     public void onEvent(String channel, Object event) {
                     }
                 };
-                JedisListener.subscribe(CHANNEL_NOTIFY);     // 订阅ubsi通知
+                JedisListener.subscribe(CHANNEL_NOTIFY);
             }
         } catch (Exception e) {
             JedisUtil.close();
@@ -319,7 +319,6 @@ public class Context {
         IOHandler.init();
         Statistics.Records.clear();     // 清除请求统计数据
 
-        // 等待容器的心跳，确保缓冲的注册信息是最新的
         if ( JedisUtil.isInited() )
             try { Thread.sleep(BEATHEART_SEND * 1000); } catch (Exception e) {}
     }
@@ -613,21 +612,21 @@ public class Context {
     String      SeqID = null;   // 前置请求的ID
     Map<String,Object> Header;  // 请求头
     String      Service;        // 服务名字
-    Object[]    Param;          // 接口名字 + 参数
+    Object[]    Param;          // 接口参数
 
     int         VerMin = 0;         // 最小版本号
-    int         VerMax = 0;         // 最大版本号，0表示不限
-    int         VerRelease = -1;    // 是否正式版本，0:不是，1:是，-1:不限
+    int         VerMax = 0;         // 最大版本号
+    int         VerRelease = -1;    // 是否正式版本
 
-    int Timeout = TimeoutRequest;   // 超时时间（秒），0表示不限时间
+    int Timeout = TimeoutRequest;   // 超时时间
     boolean ConnectAlone = false;   // 是否单独连接
     boolean LogAccess = false;      // 是否强制记录Access日志
 
     Filter[]    FilterInstances = null;
 
     ResultNotify    Notify = null;              // 收到结果的回调
-    long            RequestTime = 0;            // 发出请求的时间戳（毫秒）
-    long            ResultTime = 0;             // 处理结果的时间戳（毫秒）
+    long            RequestTime = 0;            // 发出请求的时间戳
+    long            ResultTime = 0;             // 处理结果的时间戳
     boolean         ResultStatus = false;       // 是否已经结束
     int             ResultCode = ErrorCode.TIMEOUT;   // 结果代码
     Object          ResultData = null;          // 结果数据
@@ -635,10 +634,10 @@ public class Context {
     /* 处理请求过滤器的前置动作 */
     boolean doBefore() {
         if ( FilterInstances == null )
-            return false;   // 未产生结果
+            return false;
         for ( int i = 0; i < FilterInstances.length; i ++ ) {
             if ( ResultStatus ) {
-                FilterInstances[i] = null;  // 表示不再执行after()
+                FilterInstances[i] = null;
                 continue;
             }
 
@@ -671,14 +670,14 @@ public class Context {
             flag |= FLAG_MESSAGE;
         if ( LogAccess ) {
             if ( LogUtil.LOG_SERVICE.equals(Service))
-                LogAccess = false;      // 过滤对LOG_SERVICE的请求日志
+                LogAccess = false;
             else
                 flag |= FLAG_LOG;
         }
 
         if ( RequestTime != 0 ) {
             setResult(ErrorCode.REPEAT, "discard request");
-            return true;               // 重复发送
+            return true;
         }
         RequestTime = System.currentTimeMillis();
         ResultTime = RequestTime;
@@ -686,15 +685,14 @@ public class Context {
 
         if ( doBefore() ) {
             doAfter();
-            return true;    // 已经产生结果，不再发送请求
+            return true;
         }
 
         if ( IOData.write(ch, new Object[] { ReqID, Header, Service, Param, flag }) ) {
-            // 请求统计及访问日志只记录成功发送的请求
             Statistics.send(Service, (String)Param[0]);
             if (LogAccess)
                 log(LogUtil.ACCESS, 2, "request", new LogBody.Request(ReqID, SeqID, Service, (String) Param[0], flag));
-            return false;   // 发送成功，后续要等待返回结果
+            return false;
         }
         setResult(ErrorCode.CHANNEL, "send request error");
         return true;
@@ -716,7 +714,7 @@ public class Context {
     }
     /* 是否需要强制记录Access日志 */
     boolean isForceLog() {
-        Config.LogAccess[] logForce = LogForce;        // 防止变量重置
+        Config.LogAccess[] logForce = LogForce;
         if ( logForce == null || logForce.length == 0 )
             return false;
         for ( Config.LogAccess la : logForce )
@@ -902,16 +900,15 @@ public class Context {
     public Object call() throws Exception {
         Object[] server = getRouter();
         if ( server.length == 1 )
-            return server[0];       // Mock Data
+            return server[0];
 
         if ( ConnectAlone ) {
-            // 单独直连
             try {
                 return direct((String) server[0], (Integer) server[1]);
             } catch (ResultException e) {
                 if (e.Code != ErrorCode.CONNECT)
                     throw e;
-                server = getRouter();  // 重新获取路由，重试一次
+                server = getRouter();
                 return direct((String) server[0], (Integer) server[1]);
             }
         }
@@ -922,7 +919,7 @@ public class Context {
         } catch (ResultException e) {
             if (e.Code != ErrorCode.CONNECT)
                 throw e;
-            server = getRouter();  // 重新获取路由，重试一次
+            server = getRouter();
             ch = Connector.get((String)server[0], (Integer)server[1]);
         }
 
@@ -960,7 +957,7 @@ public class Context {
         Object[] server = getRouter();
         if ( server.length == 1 ) {
             if ( notify != null )
-                notify.callback(ErrorCode.OK, server[0]);       // Mock Data
+                notify.callback(ErrorCode.OK, server[0]);
             return;
         }
 
@@ -970,7 +967,7 @@ public class Context {
             } catch (ResultException e) {
                 if (e.Code != ErrorCode.CONNECT)
                     throw e;
-                server = getRouter();  // 重新获取路由，重试一次
+                server = getRouter();
                 directAsync((String) server[0], (Integer) server[1], notify, message);
             }
             return;
@@ -982,7 +979,7 @@ public class Context {
         } catch (ResultException e) {
             if (e.Code != ErrorCode.CONNECT)
                 throw e;
-            server = getRouter();  // 重新获取路由，重试一次
+            server = getRouter();
             ch = Connector.get((String)server[0], (Integer)server[1]);
         }
 

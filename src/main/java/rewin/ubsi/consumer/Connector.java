@@ -31,7 +31,7 @@ class Connector {
                         DirectContext.remove(ch);
                         ch.close();
                     }
-                    context.resultCallback();   // 执行回调通知
+                    context.resultCallback();
                 }
 
                 for (ConcurrentMap<String, Context> map : ChannelContext.values()) {
@@ -45,7 +45,7 @@ class Connector {
                                 continue;
                             map.remove(context.ReqID);
                         }
-                        context.resultCallback();   // 执行回调通知
+                        context.resultCallback();
                     }
                 }
 
@@ -57,14 +57,14 @@ class Connector {
                             continue;
                         MessageContext.remove(context.ReqID);
                     }
-                    context.resultCallback();   // 执行回调通知
+                    context.resultCallback();
                 }
 
                 TimestampCheckTimeout = System.currentTimeMillis();
             }
 
             if ( JedisUtil.isInited() )
-                Router.dealHeartbeat();     // 更新Service Register
+                Router.dealHeartbeat();
             else
                 Context.initJedis();
         }
@@ -87,7 +87,7 @@ class Connector {
         final String addr = host + '#' + port;
         Future<Channel> fch = AddrChannel.get(addr);
         if ( fch != null )
-            return fch.get();   // 等待连接建立
+            return fch.get();
 
         FutureTask<Channel> newTask = new FutureTask<Channel>(new Callable<Channel>() {
             public Channel call() throws Exception {
@@ -105,9 +105,9 @@ class Connector {
         FutureTask<Channel> task = AddrChannel.putIfAbsent(addr, newTask);
         if ( task == null ) {
             task = newTask;
-            task.run();         // 执行新建连接的动作
+            task.run();
         }
-        return task.get();      // 等待连接建立
+        return task.get();
     }
 
     // 设置返回结果
@@ -135,17 +135,16 @@ class Connector {
             if ( !setContextResult(context, code, data) )
                 return;
             if (context.Notify == null) {
-                context.notifyAll();    // 同步方式
+                context.notifyAll();
                 return;
             }
-            // 异步方式得到结果
             if ( map == null ) {
                 DirectContext.remove(ch);
                 ch.close();
             } else
                 map.remove(id);
         }
-        context.resultCallback();   // 执行回调通知
+        context.resultCallback();
     }
 
     /** Socket异常 */
@@ -156,12 +155,12 @@ class Connector {
                 if ( !setContextResult(context, ErrorCode.CHANNEL, msg) )
                     return;
                 if ( context.Notify == null ) {
-                    context.notifyAll();    // 同步方式
+                    context.notifyAll();
                     return;
                 }
                 DirectContext.remove(ch);
             }
-            context.resultCallback();   // 执行回调通知
+            context.resultCallback();
             return;
         }
 
@@ -176,11 +175,11 @@ class Connector {
                 if ( !setContextResult(ctx, ErrorCode.CHANNEL, msg) )
                     continue;
                 if ( ctx.Notify == null ) {
-                    ctx.notifyAll();    // 同步方式
+                    ctx.notifyAll();
                     continue;
                 }
             }
-            ctx.resultCallback();   // 执行回调通知
+            ctx.resultCallback();
         }
     }
 
@@ -214,7 +213,7 @@ class Connector {
                 return;
             MessageContext.remove(context.ReqID);
         }
-        context.resultCallback();   // 执行回调通知
+        context.resultCallback();
     }
 
 }
