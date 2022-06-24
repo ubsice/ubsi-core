@@ -53,6 +53,7 @@ class ControllerGet {
                 ms.request_over = srv.RequestOver.get();
                 ms.request_error = srv.RequestError.get();
                 ms.request_dealing = (int)(srv.RequestDeal.get() - srv.RequestOver.get());
+                ms.singleton = srv.Single ? 1 : 0;
                 ms.dealing_timeout = timeouts[0].contains(sname);
                 res.services.put(sname, ms);
             }

@@ -241,7 +241,7 @@ public class Console {
             Info.Runtime res = Codec.toType(context.direct(Host, Port), Info.Runtime.class);
             for ( String sname : res.services.keySet() ) {
                 Info.SRuntime srv = res.services.get(sname);
-                System.out.println("[" + srv.status + "] " + (sname.isEmpty()?"\"\"":sname) + ": " + srv.version + (srv.release?"":"-SNAPSHOT") + ", " + srv.class_name + ", " + srv.tips);
+                System.out.println("[" + srv.status + "]" + (srv.singleton>0?":S\t":"\t") + (sname.isEmpty()?"\"\"":sname) + ": [" + srv.version + (srv.release?"":"-SNAPSHOT") + "] " + srv.class_name + ", " + srv.tips);
             }
         } catch (Context.ResultException e) {
             System.out.println("request error: " + e.toString());

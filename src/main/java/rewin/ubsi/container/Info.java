@@ -35,6 +35,7 @@ public class Info {
         public long     request_over;       // 总处理数量
         public long     request_error;      // 总错误数量
         public int      request_dealing;    // 正在处理的数量
+        public int      singleton;          // 是否单例
     }
 
     /** 容器当前的运行状态 */

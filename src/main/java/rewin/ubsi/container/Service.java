@@ -156,6 +156,7 @@ class Service extends Filter {
                     rs.Status = srv.Status;
                     rs.Timeout = timeouts[0].contains(sname);
                     rs.Deal = srv.RequestOver.get();
+                    rs.Singleton = srv.Single ? 1 : 0;
                     container.Services.put(sname, rs);
                 }
                 if ( Bootstrap.Forward > 0 ) {
@@ -172,6 +173,7 @@ class Service extends Filter {
                             rs.Status = 1;
                             rs.Timeout = false;
                             rs.Deal = Bootstrap.RequestForward.get();   // 所有微服务的转发总数
+                            rs.Singleton = -1;
                             container.Services.put(sname, rs);
                         }
                     }

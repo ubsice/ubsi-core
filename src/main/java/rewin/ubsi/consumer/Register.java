@@ -20,6 +20,7 @@ public class Register {
     /** 微服务信息 */
     public static class Service extends Filter {
         public long     Deal;           // 已处理的请求数
+        public int      Singleton;      // 是否单例
     }
     /** 服务容器 */
     public static class Container {
