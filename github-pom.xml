@@ -37,43 +37,6 @@
                     <skipTests>true</skipTests>
                 </configuration>
             </plugin>
-
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-jar-plugin</artifactId>
-                <version>3.2.0</version>
-                <configuration>
-                    <archive>
-                        <manifest>
-                            <mainClass>rewin.ubsi.container.Bootstrap</mainClass>
-                        </manifest>
-                    </archive>
-                </configuration>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-assembly-plugin</artifactId>
-                <version>3.3.0</version>
-                <configuration>
-                    <archive>
-                        <manifest>
-                            <mainClass>rewin.ubsi.container.Bootstrap</mainClass>
-                        </manifest>
-                    </archive>
-                    <descriptorRefs>
-                        <descriptorRef>jar-with-dependencies</descriptorRef>
-                    </descriptorRefs>
-                </configuration>
-                <executions>
-                    <execution>
-                        <id>make-assembly</id>
-                        <phase>package</phase>
-                        <goals>
-                            <goal>single</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
         </plugins>
     </build>
 
@@ -118,15 +81,10 @@
 
     <distributionManagement>
         <repository>
-            <id>nexus-release</id>
-            <name>release</name>
-            <url>http://192.168.1.116:8081/repository/maven-releases</url>
+            <id>github</id>
+            <name>github packages</name>
+            <url>https://maven.pkg.github.com/ubsi-home/release</url>
         </repository>
-        <snapshotRepository>
-            <id>nexus-snapshot</id>
-            <name>snapshot</name>
-            <url>http://192.168.1.116:8081/repository/maven-snapshots</url>
-        </snapshotRepository>
     </distributionManagement>
 
 </project>
