@@ -18,8 +18,8 @@ public class ScriptUtil {
 
     /** 输出信息 */
     public static class Message {
-        public long     time;   // 时间戳
-        public int      type;   // 消息类别
+        public long     time;   // 时间戳，毫秒数
+        public int      type;   // 消息类别，LogUtil.DEBUG | INFO | ERROR
         public String   text;   // 消息内容
     }
 
@@ -77,13 +77,13 @@ public class ScriptUtil {
         return "NONE";
     }
 
-    String  Host = null;        // 主机名字
+    String  Host = null;        // direct模式的主机名字，null表示路由模式
     int     Port = 7112;
     int     VerMin = 0;
     int     VerMax = 0;
     int     VerRel = -1;
     Map     Header = null;
-    int     Timeout = -1;       // 缺省的超时时间
+    int     Timeout = -1;       // 缺省的超时时间，0表示不限
 
     boolean Async = false;          // 是否异步方式
     boolean HasResult = false;      // 是否设置了结果
@@ -111,9 +111,14 @@ public class ScriptUtil {
     }
     public ScriptUtil(ServiceContext ctx) {
         serviceContext = ctx;
+        logger = ctx.getLogger();
+    }
+    public ScriptUtil(ServiceContext ctx, String tips) {
+        this(ctx);
+        LogTips = tips;
     }
 
-    /** 设置请求路径 */
+    /** 设置请求路径，host为null表示路由模式 */
     public void host(String host, int port) {
         Host = host;
         Port = port;
@@ -175,13 +180,10 @@ public class ScriptUtil {
     /** 输出消息 */
     void output(int type, Object msg) {
         if ( logLevel >= LogUtil.ERROR && type <= logLevel ) {
-            if ( LogAppTag != null || LogAppID != null || LogTips != null )
+            if ( logger != null )
+                logger.log(type, 2, LogTips == null ? "jscript" : LogTips, msg);
+            else if ( LogAppTag != null || LogAppID != null || LogTips != null )
                 LogUtil.log(type, LogAppTag, LogAppID, new Throwable(), 2, LogTips, msg);
-            else if ( serviceContext != null ) {
-                if ( logger == null )
-                    logger = serviceContext.getLogger();
-                logger.log(type, 2, "jscript", msg);
-            }
         }
         Message message = new Message();
         message.time = System.currentTimeMillis();

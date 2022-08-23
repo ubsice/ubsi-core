@@ -193,36 +193,51 @@ class Router {
             for ( Map.Entry<String, Register.Container> ctn : containers.entrySet() ) {
                 String ctn_name = ctn.getKey();
                 Register.Container container = ctn.getValue();
-                reg_ctns.put(ctn_name, "not found or inactived");
                 Register.Service ms = container.Services.get(service);
-                if ( ms == null || ms.Status != 1 )
+                if ( ms == null ) {
+                    reg_ctns.put(ctn_name, "service not found");
                     continue;
-                reg_ctns.put(ctn_name, "version mismatch");
-                if ( vmin > 0 && ms.Version < vmin )
-                    continue;
-                if ( vmax > 0 && ms.Version > vmax )
-                    continue;
-                if ( vrel >= 0 ) {
-                    if ( ms.Release && vrel == 0 )
-                        continue;
-                    if ( !ms.Release && vrel > 0 )
-                        continue;
                 }
-                reg_ctns.put(ctn_name, "invalid-timestamp: " + (t - container.Timestamp));
-                if ( container.isInvalid(t) )
-                    continue;       // 容器不可用
-                reg_ctns.put(ctn_name, "disabled");
-                Long disabled = Disabled.get(ctn_name);
-                if ( disabled != null && disabled > container.Timestamp )
+                if ( ms.Status != 1 ) {
+                    reg_ctns.put(ctn_name, "invalid status: " + ms.Status);
                     continue;
+                }
+                if ( vmin > 0 && ms.Version < vmin ) {
+                    reg_ctns.put(ctn_name, "min-version not match: " + Util.getVersion(ms.Version) + (ms.Release ? "-R" : "-B"));
+                    continue;
+                }
+                if ( vmax > 0 && ms.Version > vmax ) {
+                    reg_ctns.put(ctn_name, "max-version not match: " + Util.getVersion(ms.Version) + (ms.Release ? "-R" : "-B"));
+                    continue;
+                }
+                if ( vrel >= 0 ) {
+                    if ( ms.Release && vrel == 0 ) {
+                        reg_ctns.put(ctn_name, "rel-version not match: " + Util.getVersion(ms.Version) + (ms.Release ? "-R" : "-B"));
+                        continue;
+                    }
+                    if ( !ms.Release && vrel > 0 ) {
+                        reg_ctns.put(ctn_name, "rel-version not match: " + Util.getVersion(ms.Version) + (ms.Release ? "-R" : "-B"));
+                        continue;
+                    }
+                }
+                if ( container.isInvalid(t) ) {
+                    reg_ctns.put(ctn_name, "invalid timestamp: " + (t - container.Timestamp));
+                    continue;
+                }
+                Long disabled = Disabled.get(ctn_name);
+                if ( disabled != null && disabled > container.Timestamp ) {
+                    reg_ctns.put(ctn_name, "disabled");
+                    continue;
+                }
                 Register.Node node = new Register.Node();
                 try {
                     String[] hp = ctn_name.split("#");
                     node.Host = hp[0];
                     node.Port = Integer.parseInt(hp[1]);
-                    reg_ctns.put(ctn_name, "overload");
-                    if ( container.Waiting >= container.Overload )
+                    if ( container.Waiting >= container.Overload ) {
+                        reg_ctns.put(ctn_name, "overload");
                         continue;
+                    }
                     int wait = container.Waiting == 0 ? 1 : container.Waiting;
                     node.Weight = (double)container.Overload / wait;
                     if ( t - container.Timestamp > Context.BEATHEART_RECV * 1000 / 2 )
@@ -234,8 +249,8 @@ class Router {
                 nodes.add(node);
             }
             if ( nodes.isEmpty() ) {
-                if ( !LogUtil.LOG_SERVICE.equals(service) )
-                    Context.log(LogUtil.WARN, "router-" + service, reg_ctns);
+                if ( Context.LogNoRouting && !LogUtil.LOG_SERVICE.equals(service) )
+                    Context.log(LogUtil.DEBUG, "router-" + service, reg_ctns);
                 throw new Context.ResultException(ErrorCode.ROUTER, "no routing path by Register for " + service);
             }
             return selectNode(nodes.toArray(new Register.Node[nodes.size()]), false);

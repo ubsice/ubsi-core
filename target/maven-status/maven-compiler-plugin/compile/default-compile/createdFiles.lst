@@ -110,6 +110,7 @@ rewin\ubsi\container\ControllerSet.class
 rewin\ubsi\common\JedisUtil.class
 rewin\ubsi\container\Info$AllConfig.class
 org\slf4j\impl\StaticMDCBinder.class
+rewin\ubsi\cli\Stress$2.class
 rewin\ubsi\consumer\Config$LogAccess.class
 rewin\ubsi\cli\Stress$WorkThread.class
 rewin\ubsi\container\ServiceAcl.class

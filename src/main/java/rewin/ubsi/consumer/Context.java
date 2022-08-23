@@ -81,6 +81,8 @@ public class Context {
     final static int MAX_REDISCONN = 128;
     final static int MIN_REDISCONN = 16;
 
+    public static boolean LogNoRouting = true;      // 是否输出路由失败日志
+
     static int          IOThreads = 0;              // I/O读写线程数
     static int          TimeoutConnection = 5;      // 新建Socket连接时的超时时间
     static int          TimeoutRequest = 10;        // 请求的超时时间
@@ -801,6 +803,10 @@ public class Context {
     public Context setTimeout(int timeout) {
         Timeout = timeout;
         return this;
+    }
+    /** 获取请求的超时时间(秒数)，0表示不限 */
+    public int getTimeout() {
+        return Timeout;
     }
     /** 设置是否使用独立连接发送请求（适用于较大数据量传输的请求），缺省为false */
     public Context setConnectAlone(boolean alone) {

@@ -53,6 +53,8 @@ public class IOData {
 
     /** 向Channel输出数据 */
     public static boolean write(Channel ch, Object obj) {
+        if ( !ch.isActive() )
+            return false;
         ByteBuf body = Unpooled.directBuffer();
         Codec.encode(body, obj);
 
@@ -79,8 +81,10 @@ public class IOData {
 
         ByteBuf head = Unpooled.wrappedBuffer(buf);
         ByteBuf data = Unpooled.wrappedBuffer(head, body);
-        if ( !ch.isActive() )
+        if ( !ch.isActive() ) {
+            data.release();
             return false;
+        }
         ch.writeAndFlush(data);
         return true;
     }

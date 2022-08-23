@@ -137,7 +137,12 @@ class Service extends Filter {
                 return;
             // 微服务注册
             long t = System.currentTimeMillis();
-            if ( FlushRegister || (t - TimestampRegister > Context.REGISTER_TIMEOUT) ) {
+            boolean flushRegister = FlushRegister;
+            if ( flushRegister )
+                FlushRegister = false;
+            if ( flushRegister || (t - TimestampRegister > Context.REGISTER_TIMEOUT) ) {
+                if ( TimestampRegister > 0 && (t - TimestampRegister > Context.REGISTER_TIMEOUT * 3) )
+                    Bootstrap.log(LogUtil.ERROR, "register-timeout", (t - TimestampRegister) / 1000);
                 Set<String>[] timeouts = WorkHandler.getTimeoutDeal();
                 Register.Container container = new Register.Container();
                 container.Gateway = Bootstrap.Forward > 0;
@@ -195,7 +200,7 @@ class Service extends Filter {
                 String which = Bootstrap.Host + "#" + Bootstrap.Port;
                 try {
                     Context.setRegister(Context.REG_CONTAINER, which, container);
-                    if ( FlushRegister ) {
+                    if ( flushRegister ) {
                         JedisUtil.publish(Context.CHANNEL_NOTIFY, which + "|+");
                         TimestampHeartbeat = System.currentTimeMillis();
                     }
@@ -203,10 +208,12 @@ class Service extends Filter {
                     Bootstrap.log(LogUtil.ERROR, "register", e);
                 }
                 TimestampRegister = System.currentTimeMillis();
-                FlushRegister = false;
             }
 
-            if ( !FlushRegister && (System.currentTimeMillis() - TimestampHeartbeat >= Context.BEATHEART_SEND * 1000)) {
+            if ( (System.currentTimeMillis() - TimestampHeartbeat >= Context.BEATHEART_SEND * 1000) ) {
+                t = System.currentTimeMillis();
+                if ( TimestampHeartbeat > 0 && (t - TimestampHeartbeat >= Context.BEATHEART_SEND * 1000 * 3) )
+                    Bootstrap.log(LogUtil.ERROR, "heartbeat-timeout", (t - TimestampHeartbeat) / 1000);
                 String notify = Bootstrap.Host + "#" + Bootstrap.Port;
                 int waiting = (int)(Bootstrap.RequestTotal.get() - Bootstrap.RequestDeal.get());
                 if ( waiting > 0 )
