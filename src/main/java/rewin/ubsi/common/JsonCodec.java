@@ -295,13 +295,13 @@ public class JsonCodec {
         }
         if ( obj instanceof Map ) {
             Map map = new HashMap();
-            if ( !map.containsKey(DT) || !map.containsKey(DV) ) {
+            if ( !((Map)obj).containsKey(DT) || !((Map)obj).containsKey(DV) ) {
                 for ( Object k : ((Map)obj).keySet() )
                     map.put(k, decodeType(((Map)obj).get(k)));
                 return map;
             }
-            String dt = (String)map.get(DT);
-            Object dv = map.get(DV);
+            String dt = (String)((Map)obj).get(DT);
+            Object dv = ((Map)obj).get(DV);
             switch ( dt ) {
                 case T_BYTE:
                     return ((Number)dv).byteValue();

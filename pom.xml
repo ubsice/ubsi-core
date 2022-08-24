@@ -23,6 +23,7 @@
             ~   优化了Stress压力测试工具
             ~   修复了socket被动关闭后netty内存泄露问题
             ~   优化了ScriptUtil脚本工具的日志输出
+            ~   修复了JsonCodec.decodeType()中的bug
     -->
 
     <build>
