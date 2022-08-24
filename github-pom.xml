@@ -6,7 +6,7 @@
 
     <groupId>com.rewin</groupId>
     <artifactId>ubsi-core-ce</artifactId>
-    <version>2.3.0</version>
+    <version>2.3.1</version>
 
     <properties>
         <maven.compiler.source>8</maven.compiler.source>
@@ -16,6 +16,15 @@
 
     <name>rewin.ubsi.core</name>
     <description>UBSI核心开发包</description>
+
+    <!--
+        2.3.1   2022/08/09
+            ~   优化了Service.FlushRegister的广播刷新机制
+            ~   优化了Stress压力测试工具
+            ~   修复了socket被动关闭后netty内存泄露问题
+            ~   优化了ScriptUtil脚本工具的日志输出
+            ~   修复了JsonCodec.decodeType()中的bug
+    -->
 
     <build>
         <plugins>
