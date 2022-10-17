@@ -18,12 +18,17 @@
     <description>UBSI核心开发包（社区版）</description>
 
     <!--
-        2.3.1   2022/08/09
-            ~   优化了Service.FlushRegister的广播刷新机制
-            ~   优化了Stress压力测试工具
-            ~   修复了socket被动关闭后netty内存泄露问题
-            ~   优化了ScriptUtil脚本工具的日志输出
-            ~   修复了JsonCodec.decodeType()中的bug
+UBSI核心开发包（社区版）
+===
+版本更新说明：
+```
+2.3.1   2022/08/09
+    ~   优化了Service.FlushRegister的广播刷新机制
+    ~   优化了Stress压力测试工具
+    ~   修复了socket被动关闭后netty内存泄露问题
+    ~   优化了ScriptUtil脚本工具的日志输出
+    ~   修复了JsonCodec.decodeType()中的bug
+```
     -->
 
     <build>
@@ -127,15 +132,10 @@
 
     <distributionManagement>
         <repository>
-            <id>nexus-release</id>
-            <name>release</name>
-            <url>http://192.168.1.116:8081/repository/maven-releases</url>
+            <id>github</id>
+            <name>github packages</name>
+            <url>https://maven.pkg.github.com/open-ubsi/release</url>
         </repository>
-        <snapshotRepository>
-            <id>nexus-snapshot</id>
-            <name>snapshot</name>
-            <url>http://192.168.1.116:8081/repository/maven-snapshots</url>
-        </snapshotRepository>
     </distributionManagement>
 
 </project>

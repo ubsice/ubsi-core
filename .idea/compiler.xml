@@ -10,7 +10,7 @@
       </profile>
     </annotationProcessing>
     <bytecodeTargetLevel target="1.8">
-      <module name="core-ce" target="1.8" />
+      <module name="ubsi-core-ce" target="1.8" />
     </bytecodeTargetLevel>
   </component>
 </project>

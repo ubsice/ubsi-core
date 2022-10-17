@@ -1,1 +1,0 @@
-mvn clean deploy -f github-pom.xml -P github
