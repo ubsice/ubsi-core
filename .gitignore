@@ -1,5 +1,5 @@
 # Compiled class file
-## *.class
+*.class
 
 # Log file
 *.log
@@ -9,6 +9,13 @@
 
 # Mobile Tools for Java (J2ME)
 .mtj.tmp/
+.idea/
+target/archive-tmp/
+target/classes/
+target/generated-sources/
+target/generated-test-sources/
+target/maven-archiver/
+target/maven-status/
 
 # Package Files #
 ## *.jar
