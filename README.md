@@ -60,14 +60,3 @@ UBSI（Unified Basic Service Infrastruct）是一个基于Java的轻量级微服
   - UBSI还为开发人员提供了一体化的测试及日志工具
 
 
-
-> 更加完整的信息，请访问：
->
-> UBSI产品网站：https://ubsi-home.github.io
->
-> UBSI开发文档：https://ubsi-home.github.io/docs
->
-> UBSI工具下载：https://ubsi-home.github.io/download
-> 
-> UBSI更多资源：https://github.com/ubsi-home
-
