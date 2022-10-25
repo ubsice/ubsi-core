@@ -3,6 +3,7 @@ package rewin.ubsi.cli;
 import rewin.ubsi.common.LogUtil;
 import rewin.ubsi.common.ScriptUtil;
 import rewin.ubsi.consumer.Context;
+import rewin.ubsi.container.Bootstrap;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -19,7 +20,7 @@ public class Script {
     /** 主程序入口 */
     public static void main(String[] args) throws Exception {
         String host = null;
-        int port = 7112;
+        int port = Bootstrap.DEFAULT_PORT;
         String file = "script.js";
         for (int i = 0; i < args.length; i++) {
             if ("-h".equals(args[i])) {

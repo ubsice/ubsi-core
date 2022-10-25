@@ -186,7 +186,7 @@ class WorkHandler implements Runnable {
                     if (entry == null) {
                         // 未找到方法
                         SContext.setResult(ErrorCode.NOENTRY, SContext.Service + "#" + SContext.Entry + "() not found");
-                    } else {
+                    } else if ( SContext.prepareParams(entry) ) {
                         // 检查访问权限
                         if (!ServiceAcl.check(SContext.Service, entry, SContext.Remote))
                             SContext.setResult(ErrorCode.REJECT, SContext.Service + "#" + SContext.Entry + "() access denied"); // 拒绝访问
@@ -235,8 +235,16 @@ class WorkHandler implements Runnable {
                                     try {
                                         srv.EntryAfter.invoke(o, SContext);
                                     } catch (Exception e) {
-                                        SContext.setResultException(e);
+                                        if ( !SContext.hasResult() || SContext.getResultCode() == ErrorCode.OK ) {
+                                            entry.RequestError.incrementAndGet();
+                                            srv.RequestError.incrementAndGet();
+                                            SContext.setResultException(e);
+                                        }
                                         Bootstrap.log(LogUtil.ERROR, deal.Service + "#" + deal.Entry + "()@After", e);
+                                    }
+                                    synchronized (deal) {
+                                        deal.Interceptor = 0;
+                                        deal.Timeout = 0;
                                     }
                                 }
                                 if ( t > 0 )

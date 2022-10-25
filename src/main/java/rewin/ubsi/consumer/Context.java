@@ -66,7 +66,8 @@ public class Context {
     public final static byte[] REG_CONTAINER = "_ubsi_container_".getBytes();
     public final static byte[] REG_RESTFUL = "_ubsi_restful_".getBytes();
 
-    public final static String REQUEST_PARAMS = "request_params";   // 请求Header中表示参数的key
+    public final static String HEADER_REQ_PARAMS = "_ubsi_req_params_";     // 请求Header中表示参数的key
+    public final static String HEADER_REQ_FORWARD = "_ubsi_req_forward_";   // 请求转发的路径
 
     final static int MAX_IOTHREADS = 128;
     final static int MIN_IOTHREADS = 0;
@@ -98,6 +99,18 @@ public class Context {
 
     static List<Class<? extends Filter>> Filters = new ArrayList<>();   // 请求过滤器的class列表
 
+    /** 获得redis服务的地址：[ "IP", PORT ] */
+    public static Object[] getRedisAddress() {
+        if ( RedisHost != null )
+            return new Object[] { RedisHost, RedisPort };
+        if ( RedisSentinelAddr != null && !RedisSentinelAddr.isEmpty() ) {
+            String addr = RedisSentinelAddr.iterator().next();
+            String[] arr = addr.split(":");
+            return new Object[] { arr[0], Integer.valueOf(arr[1]) };
+        }
+        return null;
+    }
+
     /** 获得UBSI请求的客户端实例 */
     public static Context request(String service, Object... entryAndParams) throws Exception {
         if ( service == null || entryAndParams == null || entryAndParams.length == 0 || entryAndParams[0] == null ||
@@ -113,51 +126,6 @@ public class Context {
         for ( int i = 0; i < context.FilterInstances.length; i ++ )
             context.FilterInstances[i] = filters.get(i).newInstance();
         return context;
-    }
-
-    /** 转发服务请求 */
-    public static void forward(final Channel sock, final String reqID, Map<String,Object> header, String service, Object[] params, byte flag, int timeout) throws Exception {
-        Context context = new Context();
-        context.ReqID = reqID;
-        context.Header = header;
-        context.Service = service;
-        context.Param = params;
-        context.Timeout = timeout;
-        context.LogAccess = (flag & FLAG_LOG) != 0;
-        context.Notify = new ResultNotify() {
-            public void callback(int code, Object result) {
-                IOData.write(sock, new Object[] { reqID, (byte)code, result });
-            }
-        };
-
-        Object[] server = context.getRouter();
-        if ( server.length == 1 ) {
-            context.Notify.callback(ErrorCode.OK, server[0]);   // Mock Data
-            return;
-        }
-
-        Channel ch = null;
-        try {
-            ch = Connector.get((String)server[0], (Integer)server[1]);
-        } catch (ResultException e) {
-            if (e.Code != ErrorCode.CONNECT)
-                throw e;
-            server = context.getRouter();
-            ch = Connector.get((String)server[0], (Integer)server[1]);
-        }
-
-        boolean discard = (flag & FLAG_DISCARD) != 0;
-        boolean message = (flag & FLAG_MESSAGE) != 0;
-        if ( !discard && !message )
-            Connector.putChannelContext(ch, context, true);
-        if ( context.sendRequest(ch, discard, message) ) {
-            if ( !discard && !message )
-                Connector.putChannelContext(ch, context, false);
-            if ( context.ResultCode == ErrorCode.OK )
-                context.Notify.callback(ErrorCode.OK, context.ResultData);
-            else
-                context.Notify.callback(ErrorCode.FORWARD, "forward error " + context.ResultCode + ": " + context.ResultData);
-        }
     }
 
     static String ContextPath = ".";
@@ -230,6 +198,18 @@ public class Context {
             Util.rmdir(getMockFile(service, entry));
     }
 
+    static long timeHeartbeat = 0;              // 上次心跳时间
+    public static long timeHeartbeatMax = 0;    // 最大心跳间隔
+    public static long timeHeartbeatMaxAt = 0;  // 最大心跳间隔的发生时间
+    static void setTimeHeartbeat() {
+        long t = timeHeartbeat;
+        timeHeartbeat = System.currentTimeMillis();
+        if ( t > 0 && timeHeartbeat - t >= timeHeartbeatMax ) {
+            timeHeartbeatMax = timeHeartbeat - t;
+            timeHeartbeatMaxAt = timeHeartbeat;
+        }
+    }
+
     static long                 JedisTimestamp = 0;     // JedisUtil初始化的时间戳
     static JedisUtil.Listener   JedisListener = null;   // Redis消息监听
 
@@ -254,9 +234,10 @@ public class Context {
                         try {
                             if (message == null)
                                 return;
-                            if (message instanceof String)
-                                Router.Heartbeats.offer((String)message);
-                            else if (message instanceof Object[])
+                            if (message instanceof String) {
+                                Router.Heartbeats.offer((String) message);
+                                setTimeHeartbeat();
+                            } else if (message instanceof Object[])
                                 Connector.setMessageResponse(message);
                         } catch (Exception e) {
                             log(LogUtil.ERROR, "message", e);
@@ -625,6 +606,8 @@ public class Context {
     boolean LogAccess = false;      // 是否强制记录Access日志
 
     Filter[]    FilterInstances = null;
+    String      TargetContainer = null;     // 目标容器
+    Channel     TargetChannel = null;       // 目标连接
 
     ResultNotify    Notify = null;              // 收到结果的回调
     long            RequestTime = 0;            // 发出请求的时间戳
@@ -632,6 +615,7 @@ public class Context {
     boolean         ResultStatus = false;       // 是否已经结束
     int             ResultCode = ErrorCode.TIMEOUT;   // 结果代码
     Object          ResultData = null;          // 结果数据
+    Map<String,Object> Tailer;  // 结果的附加数据
 
     /* 处理请求过滤器的前置动作 */
     boolean doBefore() {
@@ -685,6 +669,7 @@ public class Context {
         ResultTime = RequestTime;
         ResultStatus = false;
 
+        TargetChannel = ch;
         if ( doBefore() ) {
             doAfter();
             return true;
@@ -765,6 +750,10 @@ public class Context {
         LogAccess = force;
         return this;
     }
+    /** 是否强制记录ACCESS日志 */
+    public boolean isLogAccess() {
+        return LogAccess;
+    }
     /** 设置Header数据项 */
     public Context setHeader(String key, Object value) {
         if ( Header == null )
@@ -784,6 +773,26 @@ public class Context {
     /** 获取Header数据 */
     public Map<String,Object> getHeader() {
         return Header;
+    }
+    /** 设置Tailer数据项 */
+    public Context setTailer(String key, Object value) {
+        if ( Tailer == null )
+            Tailer = new HashMap<>();
+        Tailer.put(key, value);
+        return this;
+    }
+    /** 设置Tailer数据对象 */
+    public Context setTailer(Map<String,Object> tailer) {
+        Tailer = tailer;
+        return this;
+    }
+    /** 获取Tailer数据项 */
+    public Object getTailer(String key) {
+        return Tailer == null ? null : Tailer.get(key);
+    }
+    /** 获取Tailer数据对象 */
+    public Map<String,Object> getTailer() {
+        return Tailer;
     }
     /** 设置版本信息的过滤，参数值为-1表示忽略此参数，缺省的min/max为0/0 */
     public Context setVersion(int min, int max) {
@@ -813,9 +822,24 @@ public class Context {
         ConnectAlone = alone;
         return this;
     }
+    /** 是否使用独立连接发送请求 */
+    public boolean isConnectAlone() {
+        return ConnectAlone;
+    }
     /** 获得路由结果，成功返回["host",port]，返回[data]表示仿真数据 */
     public Object[] getRouter() throws Exception {
-        return Router.getServer(Service, (String)Param[0], VerMin, VerMax, VerRelease);
+        Object[] res = Router.getServer(Service, (String)Param[0], VerMin, VerMax, VerRelease);
+        if ( res.length > 1 )
+            TargetContainer = (String)res[0] + "#" + res[1];
+        return res;
+    }
+    /** 获得请求的目标容器 */
+    public String getTargetContainer() {
+        return TargetContainer;
+    }
+    /** 获得请求的目标连接 */
+    public Channel getTargetChannel() {
+        return TargetChannel;
     }
     /** 获取处理时间（毫秒数，0表示还未发送请求，<0表示请求还未返回） */
     public long getResultTime() {
@@ -846,6 +870,8 @@ public class Context {
 
     /** 直接向指定的container发送请求（同步） */
     public Object direct(String host, int port) throws Exception {
+        ConnectAlone = true;
+        TargetContainer = host + "#" + port;
         Channel ch = IOHandler.connect(host, port);
         Notify = null;
         Connector.DirectContext.put(ch, this);
@@ -879,6 +905,8 @@ public class Context {
     public void directAsync(String host, int port, ResultNotify notify, boolean message) throws Exception {
         if ( notify != null && message && !JedisUtil.isInited() )
             throw new ResultException(ErrorCode.MESSAGE, "message mechanism invalid");
+        ConnectAlone = true;
+        TargetContainer = host + "#" + port;
         Channel ch = IOHandler.connect(host, port);
         if ( notify != null ) {
             Notify = notify;

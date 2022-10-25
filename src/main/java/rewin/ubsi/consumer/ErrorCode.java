@@ -14,6 +14,8 @@ public class ErrorCode {
     public final static int EXCEPTION = 7;      // 处理异常
     public final static int FORWARD = 8;        // 转发异常
     public final static int BREAK = 9;          // 接口超时，熔断
+    public final static int TRANSACTION = 10;   // 事务处理失败
+    public final static int PARAMS = 11;        // 参数错误
     public final static int ERROR = 100;        // 自定义错误
 
     public final static int REQUEST = -1;       // 请求参数异常

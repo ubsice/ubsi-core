@@ -96,6 +96,10 @@ public class LogUtil {
         SimpleDateFormat Format3 = new SimpleDateFormat("yyyyMMdd");
         Gson Json = new GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create();     //new Gson();
 
+        WorkThread(String name) {
+            super(name);
+        }
+
         /* 添加1条待处理日志 */
         void add(Object[] log) {
             Buffer.offer(log);
@@ -201,7 +205,7 @@ public class LogUtil {
     /** 初始化 */
     public static void start() {
         if ( Worker == null ) {
-            Worker = new WorkThread();
+            Worker = new WorkThread("ubsi-logger");
             Worker.start();
         }
     }

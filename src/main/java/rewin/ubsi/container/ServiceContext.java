@@ -36,6 +36,7 @@ public class ServiceContext {
     boolean     Result = false;                 // 是否已经有结果
     int         ResultCode = ErrorCode.OK;      // 结果代码
     Object      ResultData = null;              // 结果数据 或 异常
+    Map<String,Object> Tailer;  // 结果的附加数据
 
     /** 根据名字构造对象 */
     public ServiceContext(String name) {
@@ -53,26 +54,65 @@ public class ServiceContext {
         Flag = (Byte) req[4];
         Entry = (String) Param[0];
         Param[0] = this;
-        if ( ReqID == null || ReqID.length() == 0 || Service == null || Entry == null || Entry.length() == 0 )
-            throw new Exception("null or empty field");
+        if ( ReqID == null || ReqID.length() == 0 || Service == null )
+            throw new Exception("bad request");
+        if ( Entry == null )
+            Entry = "";
+    }
 
-        // 从header的request_params中获取请求参数，since 2.0.1
-        if ( Param.length == 1 && Header != null ) {
-            Map<String, Object> params = (Map)Header.get(Context.REQUEST_PARAMS);
-            if ( params != null ) {
-                Service srv = Bootstrap.ServiceMap.get(Service);
-                if ( srv != null ) {
-                    Service.Entry entry = srv.EntryMap.get(Entry);
-                    if ( entry != null ) {
-                        USParam[] usParams = entry.JAnnotation.params();
-                        Object[] param = new Object[usParams.length + 1];
-                        for ( int i = 0; i < usParams.length; i ++ )
-                            param[i+1] = params.get(usParams[i].name());
-                        param[0] = this;
-                        Param = param;
+    /* 转换参数的defaultValue */
+    Object getDefaultValue(Type type, String value) {
+        if ( type.getClass().isInstance(value) )
+            return value;
+        return Util.json2Type(value, type);
+    }
+    /* 处理参数 */
+    boolean prepareParams(Service.Entry entry) {
+        try {
+            if ( Header != null ) {
+                // 从header中获取请求参数，since 2.0.1
+                Map<String, Object> params = (Map)Header.get(Context.HEADER_REQ_PARAMS);
+                if ( params != null ) {
+                    Type[] types = entry.JMethod.getGenericParameterTypes();
+                    USParam[] usParams = entry.JAnnotation.params();
+                    Object[] param = new Object[usParams.length + 1];
+                    for ( int i = 0; i < usParams.length; i ++ ) {
+                        param[i+1] = params.get(usParams[i].name());
+                        if ( param[i+1] == null ) {
+                            String dv = Util.checkEmpty(usParams[i].defaultValue());
+                            if ( dv != null )
+                                param[i+1] = getDefaultValue(types[i+1], dv);
+                        }
                     }
+                    param[0] = this;
+                    Param = param;
+                    return true;
                 }
             }
+
+            Type[] types = entry.JMethod.getGenericParameterTypes();
+            if ( types.length <= Param.length )
+                return true;
+            USParam[] usParams = entry.JAnnotation.params();
+            if ( usParams.length + 1 != types.length )
+                return true;
+            Object[] params = new Object[types.length];
+            for ( int i = 0; i < types.length; i ++ ) {
+                if ( i < Param.length )
+                    params[i] = Param[i];
+                else {
+                    String dv = Util.checkEmpty(usParams[i-1].defaultValue());
+                    if ( dv == null )
+                        throw new Exception("no default-value for '" + usParams[i-1].name() + "'");
+                    params[i] = getDefaultValue(types[i], dv);
+                }
+            }
+            Param = params;
+            return true;
+        } catch (Exception e) {
+            setResult(ErrorCode.PARAMS, Service + "#" + Entry + "() params error, " + e);
+            Bootstrap.log(LogUtil.ERROR, Service + "#" + Entry + "()@Params", e);
+            return false;
         }
     }
 
@@ -140,6 +180,28 @@ public class ServiceContext {
     /** 获取Header数据对象 */
     public Map<String,Object> getHeader() {
         return Header;
+    }
+    /** 设置Header数据对象 */
+    public void setHeader(Map<String,Object> header) {
+        Header = header;
+    }
+    /** 设置Tailer数据项 */
+    public void setTailer(String key, Object value) {
+        if ( Tailer == null )
+            Tailer = new HashMap<>();
+        Tailer.put(key, value);
+    }
+    /** 设置Tailer数据对象 */
+    public void setTailer(Map<String,Object> tailer) {
+        Tailer = tailer;
+    }
+    /** 获取Tailer数据项 */
+    public Object getTailer(String key) {
+        return Tailer == null ? null : Tailer.get(key);
+    }
+    /** 获取Tailer数据对象 */
+    public Map<String,Object> getTailer() {
+        return Tailer;
     }
     /** 获得服务名字 */
     public String getServiceName() {
@@ -235,7 +297,7 @@ public class ServiceContext {
                     }
                 }
             }
-        }).start();
+        }, name + "-restart").start();
     }
 
     /** 获得处理数量统计，[ over, error ] */
@@ -272,23 +334,17 @@ public class ServiceContext {
         ResultCode = ErrorCode.OK;
         ResultData = data;
     }
-    /** 设置错误结果 */
-    public void setResultError(String msg) {
-        Result = true;
-        ResultCode = ErrorCode.ERROR;
-        ResultData = msg;
-    }
-    /* 设置异常结果 */
-    void setResultException(Exception e) {
+    /** 设置异常结果 */
+    public void setResultException(Exception e) {
         Result = true;
         ResultCode = ErrorCode.EXCEPTION;
         ResultData = Util.getTargetThrowable(e).toString();
     }
-    /* 设置异常结果 */
-    void setResult(int code, String msg) {
+    /** 设置结果 */
+    public void setResult(int code, Object data) {
         Result = true;
         ResultCode = code;
-        ResultData = msg;
+        ResultData = code == ErrorCode.OK ? data : (data == null ? null : data.toString());
     }
     /** 是否有处理结果 */
     public boolean hasResult() {
@@ -336,7 +392,32 @@ public class ServiceContext {
     }
     /* 转发请求 */
     void forward() throws Exception {
-        Context.forward(Sock, ReqID, Header, Service, Param, Flag, Bootstrap.Forward);
+        if ( Header == null )
+            Header = new HashMap<>();
+        String forwardPath = (String)Header.get(Context.HEADER_REQ_FORWARD);
+        String ctn = ";" + Bootstrap.Host + "#" + Bootstrap.Port;
+        if ( Util.checkEmpty(forwardPath) == null )
+            forwardPath = Remote.getHostAddress() + ctn;
+        else {
+            boolean has = forwardPath.indexOf(ctn) >= 0;
+            forwardPath += ctn;
+            if ( has )
+                throw new Exception("forward path loopback -> " + forwardPath);
+        }
+        Header.put(Context.HEADER_REQ_FORWARD, forwardPath);
+
+        Context context = Context.request(Service, Param)
+                .setHeader(Header)
+                .setTimeout(Bootstrap.Forward)
+                .setLogAccess((Flag & Context.FLAG_LOG) != 0);
+        boolean discard = (Flag & Context.FLAG_DISCARD) != 0;
+        if ( discard )
+            context.callAsync(null, false);
+        else
+            context.callAsync((int code, Object result) -> {
+                setResult(code, result);
+                response();
+            }, false);
     }
 
     /** 保存数据文件(JSON格式) */

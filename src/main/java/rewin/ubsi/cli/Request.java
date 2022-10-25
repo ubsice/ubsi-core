@@ -12,6 +12,7 @@ import rewin.ubsi.common.JsonCodec;
 import rewin.ubsi.common.Util;
 import rewin.ubsi.common.XmlCodec;
 import rewin.ubsi.consumer.Context;
+import rewin.ubsi.container.Bootstrap;
 
 import java.io.File;
 import java.io.StringWriter;
@@ -181,7 +182,7 @@ public class Request {
             req.params = new ArrayList();
         req.params.add(0, req.entry);
         Context context = Context.request(req.service, req.params.toArray());
-        if ( req.timeout != 0 )
+        if ( req.timeout >= 0 )
             context.setTimeout(req.timeout);
         if ( req.header != null )
             context.setHeader(req.header);
@@ -196,7 +197,7 @@ public class Request {
     /** 主程序入口 */
     public static void main(String[] args) throws Exception {
         String host = "localhost";
-        int port = 7112;
+        int port = Bootstrap.DEFAULT_PORT;
         String file = null;
         String service = null;
         List params = new ArrayList();

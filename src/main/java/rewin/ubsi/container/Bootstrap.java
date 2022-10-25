@@ -16,6 +16,8 @@ import rewin.ubsi.consumer.Register;
 
 import java.io.File;
 import java.net.InetAddress;
+import java.net.InetSocketAddress;
+import java.net.Socket;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -40,7 +42,7 @@ public class Bootstrap {
     final static int MIN_FORWARD = 0;
 
     static String   Host;               // 本机的主机名
-    static int      Port = 7112;        // 监听的端口
+    static int      Port = 0;           // 监听的端口
     static int      BackLog = 128;      // 监听端口的等待队列
 
     static int      IOThreads = 0;      // I/O线程数
@@ -73,6 +75,7 @@ public class Bootstrap {
     final static String         MODULE_PATH = "rewin.ubsi.modules";
     final static String         LOG_APPTAG = "rewin.ubsi.container";
     public final static String  LOG_APPID = "rewin.ubsi.container";
+    public final static int     DEFAULT_PORT = 7112;    // 缺省的端口号
 
     /* 查找过滤器 */
     static Filter findFilter(String name) {
@@ -97,11 +100,47 @@ public class Bootstrap {
         LogUtil.log(type, LOG_APPTAG, LOG_APPID, new Throwable(), 1, tips, body);
     }
 
+    /** 获取本机IP地址 */
+    public static String resolveHost() throws Exception {
+        // 从系统参数中获得地址 java -Dubsi.host=xxxx
+        String host = Util.checkEmpty(System.getProperty("ubsi.host"));
+        if ( host != null )
+            return host;
+        try {
+            Object[] redis_addr = Context.getRedisAddress();
+            if ( redis_addr != null ) {
+                Socket sock = new Socket();
+                sock.connect(new InetSocketAddress((String)redis_addr[0], (Integer)redis_addr[1]), 1000);
+                if ( sock.isConnected() ) {
+                    try {
+                        InetAddress local_addr = sock.getLocalAddress();
+                        if ( !local_addr.isLoopbackAddress() )
+                            return local_addr.getHostAddress();
+                    } finally {
+                        sock.close();
+                    }
+                }
+            }
+        } catch (Exception e) {
+        }
+        return InetAddress.getLocalHost().getHostName().toLowerCase();
+    }
+
+    /** 从系统参数中获得端口 java -Dubsi.port=7112 */
+    public static int resolvePort(int defaultPort) throws Exception {
+        String port = Util.checkEmpty(System.getProperty("ubsi.port"));
+        if ( port != null ) {
+            defaultPort = Integer.parseInt(port);
+            if ( defaultPort <= 256 || defaultPort >= 65536 )
+                throw new Exception("invalid port");
+        }
+        return defaultPort;
+    }
+
     /** 启动容器 */
     public synchronized static void start() throws Exception {
-        Host = InetAddress.getLocalHost().getHostName().toLowerCase();  // 先取默认主机名
         ServicePath = new File(".").getCanonicalPath();                 // 取当前运行目录
-        Context.setLogApp(Host + "#---", LOG_APPTAG);
+        Context.setLogApp(InetAddress.getLocalHost().getHostName().toLowerCase() + "#---", LOG_APPTAG);
         Context.startup(ServicePath);           // 初始化UBSI客户端
 
         LibManager.init();

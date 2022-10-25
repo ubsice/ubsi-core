@@ -130,6 +130,18 @@ class Service extends Filter {
     static long     TimestampRegister = 0;  // 更新注册项的时间戳
     static boolean  FlushRegister = true;   // 是否立即更新注册项
 
+    static long     timeHeartbeatMax = 0;   // 最大的心跳间隔
+    static long     timeHeartbeatMaxAt = 0; // 最大心跳间隔的发生时间
+    // 设置心跳时间戳
+    static void setTimestampHeartbeat() {
+        long t = TimestampHeartbeat;
+        TimestampHeartbeat = System.currentTimeMillis();
+        if ( t > 0 && TimestampHeartbeat - t >= timeHeartbeatMax ) {
+            timeHeartbeatMax = TimestampHeartbeat - t;
+            timeHeartbeatMaxAt = TimestampHeartbeat;
+        }
+    }
+
     // Container的定时任务
     static class TimerDealer extends TimerTask {
         public void run() {
@@ -202,7 +214,7 @@ class Service extends Filter {
                     Context.setRegister(Context.REG_CONTAINER, which, container);
                     if ( flushRegister ) {
                         JedisUtil.publish(Context.CHANNEL_NOTIFY, which + "|+");
-                        TimestampHeartbeat = System.currentTimeMillis();
+                        setTimestampHeartbeat();
                     }
                 } catch (Exception e) {
                     Bootstrap.log(LogUtil.ERROR, "register", e);
@@ -223,7 +235,7 @@ class Service extends Filter {
                 } catch (Exception e) {
                     Bootstrap.log(LogUtil.ERROR, "heartbeat", e);
                 }
-                TimestampHeartbeat = System.currentTimeMillis();
+                setTimestampHeartbeat();
             }
         }
     }

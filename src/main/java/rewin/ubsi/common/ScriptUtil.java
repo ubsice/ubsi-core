@@ -3,6 +3,7 @@ package rewin.ubsi.common;
 import com.google.gson.Gson;
 import rewin.ubsi.consumer.Context;
 import rewin.ubsi.consumer.Logger;
+import rewin.ubsi.container.Bootstrap;
 import rewin.ubsi.container.ServiceContext;
 
 import javax.script.ScriptEngine;
@@ -31,6 +32,7 @@ public class ScriptUtil {
             "$.timeout(seconds)", "设置UBSI请求的超时时间（秒数），0表示不限，-1表示使用缺省值",
             "$.async(true|false)", "设置同步/异步方式发送请求，默认方式为同步",
             "$.request('service', 'entry', ...)", "发送UBSI请求，同步方式返回结果，异步方式直接返回null",
+            "$.tailer()", "获得UBSI请求结果的附加数据",
             "$.result(data)", "设置脚本的返回结果，如果不设置，则将最后一条语句的值作为脚本结果",
             "$.sleep(millis)", "暂停millis毫秒",
             "$.json(obj)", "将obj转换为json字符串，JS解析：val=eval('('+{str}+')');",
@@ -78,7 +80,7 @@ public class ScriptUtil {
     }
 
     String  Host = null;        // direct模式的主机名字，null表示路由模式
-    int     Port = 7112;
+    int     Port = Bootstrap.DEFAULT_PORT;
     int     VerMin = 0;
     int     VerMax = 0;
     int     VerRel = -1;
@@ -88,6 +90,7 @@ public class ScriptUtil {
     boolean Async = false;          // 是否异步方式
     boolean HasResult = false;      // 是否设置了结果
     public Object  Result = null;   // 脚本的执行结果
+    Map     Tailer = null;          // 请求结果的附加数据
 
     String  LogAppTag = null;
     String  LogAppID = null;
@@ -163,7 +166,14 @@ public class ScriptUtil {
                 context.callAsync(null, false);
             return null;
         }
-        return Host != null ? context.direct(Host, Port) : context.call();
+        Object res = Host != null ? context.direct(Host, Port) : context.call();
+        Tailer = context.getTailer();
+        return res;
+    }
+
+    /** 返回UBSI请求结果的附加数据 */
+    public Map tailer() {
+        return Tailer;
     }
 
     /** 设置脚本结果 */
@@ -238,6 +248,7 @@ public class ScriptUtil {
     }
     /** 将[number]转换为byte[] */
     public byte[] _bytes(Map x) {
+        if ( x == null ) return null;
         byte[] res = new byte[x.size()];
         for ( int i = 0; i < res.length; i ++ )
             res[i] = _byte((int)x.get("" + i));
@@ -245,12 +256,14 @@ public class ScriptUtil {
     }
     /** 将{...}转换为Map */
     public Map _map(Map x) {
+        if ( x == null ) return null;
         Map res = new HashMap();
         res.putAll(x);
         return res;
     }
     /** 将[...]转换为List */
     public List _list(Map x) {
+        if ( x == null ) return null;
         List res = new ArrayList();
         for ( int i = 0; i < x.size(); i ++ )
             res.add(x.get("" + i));
@@ -258,6 +271,7 @@ public class ScriptUtil {
     }
     /** 将[...]转换为Set */
     public Set _set(Map x) {
+        if ( x == null ) return null;
         Set res = new HashSet();
         for ( int i = 0; i < x.size(); i ++ )
             res.add(x.get("" + i));
@@ -265,6 +279,7 @@ public class ScriptUtil {
     }
     /** 将[...]转换为Object[] */
     public Object[] _array(Map x) {
+        if ( x == null ) return null;
         Object[] res = new Object[x.size()];
         for ( int i = 0; i < res.length; i ++ )
             res[i] = x.get("" + i);

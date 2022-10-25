@@ -6,7 +6,7 @@
 
     <groupId>com.rewin</groupId>
     <artifactId>ubsi-core-ce</artifactId>
-    <version>2.3.1</version>
+    <version>2.3.2</version>
 
     <properties>
         <maven.compiler.source>8</maven.compiler.source>
@@ -28,6 +28,15 @@ UBSI核心开发包（社区版）
     ~   修复了socket被动关闭后netty内存泄露问题
     ~   优化了ScriptUtil脚本工具的日志输出
     ~   修复了JsonCodec.decodeType()中的bug
+2.3.2   2022/09/02
+    +   consumer.Context增加了TargetContainer/TargetChannel属性
+    ~   cli.Console的"service"命令修改为"modules"，可列出微服务及过滤器
+    ~   优化了容器forward的机制，避免出现循环转发
+    +   controller运行信息增加了redis连接/心跳时间、TOP信息等
+    ~   修改了请求Header中参数的KEY
+    +   @USParam注解增加了defaultValue属性
+    +   增加了返回结果的Tailer数据；cli.Console/ScriptUtil增加了tailer命令
+    ~   修改了获取容器注册地址的方法
 ```
     -->
 

@@ -14,7 +14,7 @@ import java.util.*;
 @UService(
         name = "",
         tips = "UBSI微服务容器控制器",
-        version = "2.3.1",                      // 容器的版本号
+        version = "2.3.2",                      // 容器的版本号
         release = false                         // 容器的发行状态（false表示community-edition）
 )
 class Controller extends ControllerModule {
@@ -101,6 +101,8 @@ class Controller extends ControllerModule {
 
     @USInit
     public static void init(ServiceContext ctx) throws Exception {
+        Bootstrap.Host = null;
+        Bootstrap.Port = 0;
         // 读取运行配置文件
         Info.Container config = ctx.readDataFile(CONFIG_FILE, Info.Container.class);
         if ( config != null ) {
@@ -116,6 +118,10 @@ class Controller extends ControllerModule {
             Bootstrap.Forward = config.forward;
             Bootstrap.ForwardDoor = config.forward_door;
         }
+        if ( Bootstrap.Host == null )
+            Bootstrap.Host = Bootstrap.resolveHost();
+        if ( Bootstrap.Port == 0 )
+            Bootstrap.Port = Bootstrap.resolvePort(Bootstrap.DEFAULT_PORT);
 
         Context.setLogApp(Bootstrap.Host + "#" + Bootstrap.Port, Bootstrap.LOG_APPTAG);
 
@@ -231,8 +237,8 @@ class Controller extends ControllerModule {
     /* 检查配置项的值 */
     static void checkConfig(Info.Container config) throws Exception {
         config.host = Util.checkEmpty(config.host);
-        if ( config.port <= 100 && config.port >= 65536 )
-            throw new Exception("port is invalid");
+        if ( config.port != 0 && (config.port <= 256 || config.port >= 65536) )
+            throw new Exception("invalid port");
         config.backlog = Util.checkMinMax(config.backlog, Bootstrap.MIN_BACKLOG, Bootstrap.MAX_BACKLOG);
         config.io_threads = Util.checkMinMax(config.io_threads, Bootstrap.MIN_IOTHREADS, Bootstrap.MAX_IOTHREADS);
         config.work_threads = Util.checkMinMax(config.work_threads, Bootstrap.MIN_WORKTHREADS, Bootstrap.MAX_WORKTHREADS);

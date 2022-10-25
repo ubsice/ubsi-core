@@ -14,6 +14,7 @@ import rewin.ubsi.common.LogUtil;
 import rewin.ubsi.common.Util;
 
 import java.net.InetSocketAddress;
+import java.util.Map;
 import java.util.Timer;
 import java.util.concurrent.TimeUnit;
 
@@ -51,7 +52,8 @@ class IOHandler extends ChannelInboundHandlerAdapter {
         String id = (String) res[0];
         byte code = (Byte) res[1];
         Object data = res[2];
-        Connector.setChannelResponse(ctx.channel(), id, code, data);
+        Map<String,Object> tailer = res.length > 3 ? (Map<String,Object>)res[3] : null;
+        Connector.setChannelResponse(ctx.channel(), id, code, data, tailer);
     }
 
     @Override

@@ -295,18 +295,19 @@ public class JedisUtil {
                 }
                 close();
             }
-        }).start();
+        }, "ubsi-jedis-subscribe").start();     // 启动Jedis订阅线程
         for ( int i = 0; i <= TIMEOUT; i ++ ) {
             if ( JedisInitException != null ) {
                 new Thread(new Runnable() {
                     public void run() {
                         close();
                     }
-                }).start();
+                }, "ubsi-jedis-close").start();
                 throw JedisInitException;
             }
             if ( JedisSubscriber.isSubscribed() ) {
                 resubscribe();
+                timeInit = System.currentTimeMillis();
                 return;
             }
             try { Thread.sleep(1000); } catch (Exception e) {}
@@ -315,7 +316,7 @@ public class JedisUtil {
             public void run() {
                 close();
             }
-        }).start();
+        }, "ubsi-jedis-close").start();
         throw new Exception("redis subscriber timeout");
     }
 
@@ -329,6 +330,9 @@ public class JedisUtil {
         config.setMaxWaitMillis(TIMEOUT * 1000);
         return config;
     }
+
+    public static long timeInit = 0;
+    public static long timeClose = 0;
 
     /** StandAlone模式初始化，pwd为null表示无密码 */
     public synchronized static void init(String host, int port, String pwd, int max_idle, int max_conn) throws Exception {
@@ -370,6 +374,7 @@ public class JedisUtil {
             JedisPools = null;
         }
         JedisSubscriber = null;
+        timeClose = System.currentTimeMillis();
     }
 
     /** 获取一个Jedis实例（注：如果切换Database，需要在完成操作后切换回JedisUtil.DATABASE） */

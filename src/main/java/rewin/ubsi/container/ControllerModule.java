@@ -147,9 +147,10 @@ class ControllerModule extends ControllerSet {
     @USEntry(
             tips = "卸载模块",
             params = {@USParam(name="name", tips="service名字或filter类名")},
-            readonly = false
+            readonly = false,
+            result = "0:卸载成功，1:ClassLoader仍在使用中，2:注销JAR包失败"
     )
-    public void uninstall(ServiceContext ctx, String name) throws Exception {
+    public int uninstall(ServiceContext ctx, String name) throws Exception {
         Filter module = Bootstrap.findModule(name);
         if ( module == null )
             throw new Exception("service or filter '" + name + "' not found");
@@ -163,16 +164,21 @@ class ControllerModule extends ControllerSet {
 
         Service.FlushRegister = true;       // 需要更新注册表
 
+        int res = 0;
         if ( module.JarLib != null ) {
-            if ( !LibManager.putClassLoader(module.JClass.getClassLoader()) )
+            if ( !LibManager.putClassLoader(module.JClass.getClassLoader()) ) {
                 Bootstrap.log(LogUtil.WARN, "uninstall " + name, "class loader for " + module.JarLib.getJarFileName() + " still in use by another service/filter");
-            else if ( unregisterJar(ctx, module.JarLib.groupId, module.JarLib.artifactId, module.JarLib.version) == 0 )   // 卸载JarLib
+                res = 1;
+            } else if ( unregisterJar(ctx, module.JarLib.groupId, module.JarLib.artifactId, module.JarLib.version) != 1 ) {
                 Bootstrap.log(LogUtil.WARN, "uninstall " + name, module.JarLib.getJarFileName() + " still in use by another service/filter");
+                res = 2;
+            }
         }
         Controller.saveModuleFile(ctx);
 
         // 删除模块相关文件
         String path = Bootstrap.ServicePath + File.separator + Bootstrap.MODULE_PATH + File.separator + name;
         Util.rmdir(new File(path));
+        return res;
     }
 }

@@ -27,7 +27,7 @@ class ControllerSet extends ControllerGet {
             public void run() {
                 try { Bootstrap.stop(); } catch (Exception e) {}
             }
-        }).start();
+        }, "ubsi-shutdown").start();
     }
 
     @USEntry(
@@ -47,7 +47,7 @@ class ControllerSet extends ControllerGet {
                         Bootstrap.log(LogUtil.ERROR, "restart", e);
                     }
                 }
-            }).start();
+            }, "ubsi-restart").start();
         else {
             Filter module = Bootstrap.findModule(name);
             if ( module == null )

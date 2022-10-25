@@ -4,6 +4,7 @@ import com.google.gson.Gson;
 import redis.clients.jedis.Jedis;
 import rewin.ubsi.common.*;
 import rewin.ubsi.consumer.Context;
+import rewin.ubsi.container.Bootstrap;
 import rewin.ubsi.container.Info;
 
 import java.io.BufferedReader;
@@ -18,12 +19,13 @@ public class Console {
 
     static boolean  DMode = true;           // 直连模式
     static String   Host = "localhost";
-    static int      Port = 7112;
+    static int      Port = Bootstrap.DEFAULT_PORT;
     static String   UseService = null;      // USE模式
     static boolean  XmlFormat = false;
     static int      Timeout = 10;           // Context.TimeoutRequest
     static boolean  ConnectAlone = false;
     static boolean  AsyncMode = false;
+    static boolean  MqMode = false;
     static boolean  TraceLog = false;
     static Map<String,Object>   Header = new HashMap<>();
     static int      VerMin = 0;
@@ -50,7 +52,7 @@ public class Console {
     static Context.ResultNotify RNotify = new Context.ResultNotify() {
         @Override
         public void callback(int code, Object result) {
-            System.out.println("\n~~~ receive result from Redis-MQ: " + code + " ~~~");
+            System.out.println("\n~~~ receive result " + (MqMode?"from Redis-MQ":"async") + ", code: " + code + " ~~~");
             if ( XmlFormat )
                 try { Request.printXml(result); } catch (Exception e) { e.printStackTrace(); }
             else
@@ -125,19 +127,21 @@ public class Console {
                     case "use":         use(cmd); break;
                     case "xml":         xml(); break;
                     case "json":        json(); break;
-                    case "service":     service(); break;
+                    case "modules":     modules(); break;
                     case "entry":       entry(cmd); break;
                     case "config":      config(cmd); break;
                     case "header":      header(cmd); break;
+                    case "tailer":      tailer(); break;
                     case "version":     version(cmd); break;
                     case "router":      router(cmd); break;
                     case "timeout":     timeout(cmd); break;
                     case "alone":       alone(cmd); break;
                     case "async":       async(cmd); break;
+                    case "mq":          mq(cmd); break;
                     case "time":        time(); break;
                     case "register":    register(cmd); break;
                     case "tracelog":    tracelog(cmd); break;
-                    case "jedis":       jedis(cmd); break;
+                    case "jedis":       jedis(); break;
                     case "subscribe":   subscribe(cmd); break;
                     case "unsubscribe": unsubscribe(cmd); break;
                     case "publish":     publish(cmd); break;
@@ -215,9 +219,9 @@ public class Console {
                 context = getContext(cmd[1], params);
                 if ( AsyncMode ) {
                     if ( DMode )
-                        context.directAsync(Host, Port, RNotify, true);
+                        context.directAsync(Host, Port, RNotify, MqMode);
                     else
-                        context.callAsync(RNotify, true);
+                        context.callAsync(RNotify, MqMode);
                 } else {
                     Object res = DMode ? context.direct(Host, Port) : context.call();
                     if (XmlFormat)
@@ -234,14 +238,19 @@ public class Console {
     static void use(String[] cmd) {
         UseService = cmd.length > 1 ? cmd[1] : null;
     }
-    // service
-    static void service() throws Exception {
+    // modules
+    static void modules() throws Exception {
         try {
             context = Context.request("", "getRuntime", null);
             Info.Runtime res = Codec.toType(context.direct(Host, Port), Info.Runtime.class);
             for ( String sname : res.services.keySet() ) {
                 Info.SRuntime srv = res.services.get(sname);
                 System.out.println("[" + srv.status + "]" + (srv.singleton>0?":S\t":"\t") + (sname.isEmpty()?"\"\"":sname) + ": [" + srv.version + (srv.release?"":"-SNAPSHOT") + "] " + srv.class_name + ", " + srv.tips);
+            }
+            if ( res.filters != null && !res.filters.isEmpty() ) {
+                System.out.println("--------");
+                for ( Info.FRuntime flt : res.filters )
+                    System.out.println("[" + flt.status + "]:F\t" + flt.class_name + ": [" + flt.version + (flt.release?"":"-SNAPSHOT") + "], " + flt.tips);
             }
         } catch (Context.ResultException e) {
             System.out.println("request error: " + e.toString());
@@ -284,7 +293,7 @@ public class Console {
         Request.printJson(Context.getStatistics());
     }
     // jedis
-    static void jedis(String[] cmd) throws Exception {
+    static void jedis() throws Exception {
         if ( !JedisUtil.isInited() )
             System.out.println("Jedis isn't initialized");
         else {
@@ -390,6 +399,14 @@ public class Console {
         else
             Request.printJson(JsonCodec.encodeType(Header));
     }
+    static void tailer() throws Exception {
+        Map<String,Object> tailer = context == null ? null : context.getTailer();
+        System.out.print("request's tailer: ");
+        if ( XmlFormat )
+            Request.printXml(tailer);
+        else
+            Request.printJson(JsonCodec.encodeType(tailer));
+    }
     // version [min max release]
     static void version(String[] cmd) {
         if ( cmd.length > 3 )
@@ -441,7 +458,17 @@ public class Console {
                 case "off": AsyncMode = false; break;
             }
         }
-        System.out.println("receive result through Redis-MQ: " + (AsyncMode ? "on" : "off"));
+        System.out.println("receive result async-mode: " + (AsyncMode ? "on" : "off"));
+    }
+    // mq [on|off]
+    static void mq(String[] cmd) {
+        if ( cmd.length > 1 ) {
+            switch (cmd[1]) {
+                case "on":  MqMode = true; break;
+                case "off": MqMode = false; break;
+            }
+        }
+        System.out.println("receive async-result by Redis-MQ: " + (MqMode ? "on" : "off"));
     }
     // time
     static void time() {
@@ -520,17 +547,19 @@ public class Console {
     // help
     static void help() {
         String[][] cmd = {
-                new String[] { "async [on|off]", "show or set receive result through Redis-MQ" },
+                new String[] { "async [on|off]", "show or set receive result Async-Mode" },
+                new String[] { "mq [on|off]", "show or set async-result through Redis-MQ" },
                 new String[] { "direct [host [port]]", "request direct to host#port (switch to direct mode)" },
                 new String[] { "call", "request call to routed Container (switch to router mode)" },
                 new String[] { "request service entry ...", "send request synchronized (use ' instead of \" in json mode parameters)" },
                 new String[] { "use service", "use spec service" },
                 new String[] { "xml", "set XML data format" },
                 new String[] { "json", "set JSON data format" },
-                new String[] { "service", "show services in Container (direct mode)" },
+                new String[] { "modules", "show services and filters in Container (direct mode)" },
                 new String[] { "entry service [entry]", "show service's entry in Container (direct mode)" },
                 new String[] { "config [router|log]", "show local config for Consumer [route|log]" },
                 new String[] { "header [key [value]]", "show or set|clear request header's key-value" },
+                new String[] { "tailer", "show tailer-data of last request" },
                 new String[] { "version [min max release]", "show or set request service's version" },
                 new String[] { "router service", "get service's routed path" },
                 new String[] { "timeout [seconds]", "show or set request's timeout" },

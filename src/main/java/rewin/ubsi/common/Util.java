@@ -380,4 +380,25 @@ public class Util {
     public static void disbaleIpv6ForJava8() {
         System.setProperty("java.net.preferIPv4Stack", "true");
     }
+
+    /** 执行系统命令并获得输出 */
+    public static List<String> runCommand(int lines, String... cmd) throws Exception {
+        ProcessBuilder builder = new ProcessBuilder(cmd);
+        builder.redirectErrorStream(true);
+        Process process = builder.start();
+        // 截获命令的输出
+        BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+        int count = 0;
+        String s;
+        List<String> res = new ArrayList<>();
+        while ((s = reader.readLine()) != null) {
+            res.add(s);
+            count ++;
+            if ( lines > 0 && count >= lines ) {
+                try { process.destroyForcibly(); } catch (Exception e) { }
+                break;
+            }
+        }
+        return res;
+    }
 }

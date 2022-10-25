@@ -9,6 +9,7 @@ import rewin.ubsi.consumer.Context;
 import rewin.ubsi.consumer.Register;
 
 import java.lang.management.ManagementFactory;
+import java.lang.management.RuntimeMXBean;
 import java.lang.management.ThreadMXBean;
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
@@ -65,6 +66,10 @@ public class Info {
         public int      processors;         // CPU核数
         public int      threads;            // JVM线程数
         public String   redis_conn;         // Redis连接数量: "活动数, 空闲数"
+        public long[]   redis_time;         // Redis时间戳: [ 连接时间, 断开时间 ]
+        public long[]   heartbeat;          // 心跳时间：[ 容器心跳最大间隔, 容器最大间隔时间戳, 接收心跳最大间隔, 接收最大间隔时间戳 ]
+        public String   pid;                // 进程号
+        public List<String> top;            // top命令的输出
         public Map<String, Register.Container> register;    // 动态路由表
         public Map      consumer_statistics;// Consumer请求统计
     }
@@ -78,6 +83,11 @@ public class Info {
         controller.memory_total = (int)(java.lang.Runtime.getRuntime().totalMemory() / (1024*1024));
         ThreadMXBean bean = ManagementFactory.getThreadMXBean();
         controller.threads = bean.getThreadCount();
+        controller.redis_time = new long[] { JedisUtil.timeInit, JedisUtil.timeClose };
+        controller.heartbeat = new long[] { Service.timeHeartbeatMax, Service.timeHeartbeatMaxAt, Context.timeHeartbeatMax, Context.timeHeartbeatMaxAt };
+        RuntimeMXBean runtime = ManagementFactory.getRuntimeMXBean();
+        controller.pid = runtime.getName();
+        try { controller.top = Util.runCommand(20, "top", "-b", "-n 1"); } catch (Exception e) { }
         controller.consumer_statistics = Context.getStatistics();
         if ( JedisUtil.isInited() ) {
             int[] conns = JedisUtil.getPools();

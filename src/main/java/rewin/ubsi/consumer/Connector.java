@@ -4,6 +4,7 @@ import io.netty.channel.Channel;
 import rewin.ubsi.common.JedisUtil;
 import rewin.ubsi.common.LogUtil;
 
+import java.util.Map;
 import java.util.Set;
 import java.util.TimerTask;
 import java.util.concurrent.*;
@@ -26,7 +27,7 @@ class Connector {
                     if (!check(context))
                         continue;
                     synchronized (context) {
-                        if (!setContextResult(context, ErrorCode.TIMEOUT, "request timeout"))
+                        if (!setContextResult(context, ErrorCode.TIMEOUT, "request timeout", null))
                             continue;
                         DirectContext.remove(ch);
                         ch.close();
@@ -41,7 +42,7 @@ class Connector {
                         if (!check(context))
                             continue;
                         synchronized (context) {
-                            if (!setContextResult(context, ErrorCode.TIMEOUT, "request timeout"))
+                            if (!setContextResult(context, ErrorCode.TIMEOUT, "request timeout", null))
                                 continue;
                             map.remove(context.ReqID);
                         }
@@ -53,7 +54,7 @@ class Connector {
                     if (!check(context))
                         continue;
                     synchronized (context) {
-                        if (!setContextResult(context, ErrorCode.TIMEOUT, "request timeout"))
+                        if (!setContextResult(context, ErrorCode.TIMEOUT, "request timeout", null))
                             continue;
                         MessageContext.remove(context.ReqID);
                     }
@@ -111,16 +112,17 @@ class Connector {
     }
 
     // 设置返回结果
-    static boolean setContextResult(Context context, int code, Object data) {
+    static boolean setContextResult(Context context, int code, Object data, Map<String,Object> tailer) {
         if ( context.ResultStatus )
             return false;
         context.setResult(code, data);
+        context.setTailer(tailer);
         context.logResult();
         return true;
     }
 
     /** 通过Socket得到请求结果 */
-    static void setChannelResponse(Channel ch, String id, byte code, Object data) {
+    static void setChannelResponse(Channel ch, String id, byte code, Object data, Map<String,Object> tailer) {
         Context context = DirectContext.get(ch);
         ConcurrentMap<String, Context> map = null;
         if ( context == null ) {
@@ -132,7 +134,7 @@ class Connector {
                 return;
         }
         synchronized (context) {
-            if ( !setContextResult(context, code, data) )
+            if ( !setContextResult(context, code, data, tailer) )
                 return;
             if (context.Notify == null) {
                 context.notifyAll();
@@ -152,7 +154,7 @@ class Connector {
         Context context = DirectContext.get(ch);
         if ( context != null ) {
             synchronized (context) {
-                if ( !setContextResult(context, ErrorCode.CHANNEL, msg) )
+                if ( !setContextResult(context, ErrorCode.CHANNEL, msg, null) )
                     return;
                 if ( context.Notify == null ) {
                     context.notifyAll();
@@ -172,7 +174,7 @@ class Connector {
             return;
         for ( Context ctx : map.values() ) {
             synchronized (ctx) {
-                if ( !setContextResult(ctx, ErrorCode.CHANNEL, msg) )
+                if ( !setContextResult(ctx, ErrorCode.CHANNEL, msg, null) )
                     continue;
                 if ( ctx.Notify == null ) {
                     ctx.notifyAll();
@@ -189,7 +191,7 @@ class Connector {
         if ( map == null ) {
             if ( put )
                 throw new Context.ResultException(ErrorCode.CHANNEL, "socket channel invalid");
-            setContextResult(context, ErrorCode.CHANNEL, "socket channel invalid");
+            setContextResult(context, ErrorCode.CHANNEL, "socket channel invalid", null);
             return;
         }
         if ( put )
@@ -204,12 +206,13 @@ class Connector {
         String id = (String) res[0];
         byte code = (Byte) res[1];
         Object data = res[2];
+        Map<String,Object> tailer = res.length > 3 ? (Map<String,Object>)res[3] : null;
 
         Context context = MessageContext.get(id);
         if ( context == null )
             return;
         synchronized (context) {
-            if ( !setContextResult(context, code, data) )
+            if ( !setContextResult(context, code, data, tailer) )
                 return;
             MessageContext.remove(context.ReqID);
         }
