@@ -37,6 +37,7 @@ UBSI核心开发包（社区版）
     +   @USParam注解增加了defaultValue属性
     +   增加了返回结果的Tailer数据；cli.Console/ScriptUtil增加了tailer命令
     ~   修改了获取容器注册地址的方法
+    +   Controller的uninstall()增加了返回值
 ```
     -->
 

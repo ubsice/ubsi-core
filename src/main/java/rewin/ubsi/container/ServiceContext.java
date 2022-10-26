@@ -120,7 +120,8 @@ public class ServiceContext {
     void response() {
         if ( (Flag & Context.FLAG_DISCARD) != 0 )
             return;
-        Object[] resp = new Object[] { ReqID, (byte)ResultCode, ResultData };
+        Object[] resp = Tailer == null ? new Object[] { ReqID, (byte)ResultCode, ResultData } :
+                new Object[] { ReqID, (byte)ResultCode, ResultData, Tailer };
         if ( (Flag & Context.FLAG_MESSAGE) != 0 ) {
             if (!JedisUtil.isInited())
                 return;
