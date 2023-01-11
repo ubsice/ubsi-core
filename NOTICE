@@ -1,0 +1,90 @@
+UBSI
+Copyright 1999-2022 Rewin Network Ltd. All Rights Reserved.
+
+------
+org.slf4j.impl.XXX.java in this product is
+copied and modified from org.slf4j.impl of slf4j/slf4j-simple project.
+https://github.com/qos-ch/slf4j/tree/1.7-maintenance/slf4j-simple
+                          slf4j/slf4j-simple
+                    ==============================
+
+    Copyright (c) 2004-2022 QOS.ch
+    All rights reserved.
+
+    Permission is hereby granted, free  of charge, to any person obtaining
+    a  copy  of this  software  and  associated  documentation files  (the
+    "Software"), to  deal in  the Software without  restriction, including
+    without limitation  the rights to  use, copy, modify,  merge, publish,
+    distribute,  sublicense, and/or sell  copies of  the Software,  and to
+    permit persons to whom the Software  is furnished to do so, subject to
+    the following conditions:
+
+    The  above  copyright  notice  and  this permission  notice  shall  be
+    included in all copies or substantial portions of the Software.
+
+    THE  SOFTWARE IS  PROVIDED  "AS  IS", WITHOUT  WARRANTY  OF ANY  KIND,
+    EXPRESS OR  IMPLIED, INCLUDING  BUT NOT LIMITED  TO THE  WARRANTIES OF
+    MERCHANTABILITY,    FITNESS    FOR    A   PARTICULAR    PURPOSE    AND
+    NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+    LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
+    OF CONTRACT, TORT OR OTHERWISE,  ARISING FROM, OUT OF OR IN CONNECTION
+    WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+------
+This product has a bundle dom4j
+                      dom4j
+                   =======================
+
+Copyright 2001-2016 (C) MetaStuff, Ltd. and DOM4J contributors. All Rights Reserved.
+https://github.com/dom4j/dom4j
+
+------
+This product has a bundle gson
+                      gson
+                   =======================
+
+Copyright (C) 2018 The Gson authors
+https://github.com/google/gson
+
+------
+This product has a bundle netty
+                      netty
+                   =======================
+
+Copyright 2012 The Netty Project
+https://github.com/netty/netty
+
+------
+This product has a bundle jedis
+                      jedis
+                   =======================
+
+Copyright (c) 2010 Jonathan Leibiusky
+https://github.com/redis/jedis
+
+------
+This product has a bundle mongo-java-driver
+                      mongo-java-driver
+                   =======================
+
+Copyright 2008-present MongoDB, Inc.
+https://github.com/mongodb/mongo-java-driver
+
+------
+This product has a bundle bouncycastle
+                      bouncycastle
+                   =======================
+
+Copyright (c) 2000 - 2021 The Legion of the Bouncy Castle Inc. (https://www.bouncycastle.org)
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated
+documentation files (the "Software"), to deal in the Software without restriction, including without limitation
+the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software,
+and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE
+WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
+COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
+ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
