@@ -35,54 +35,55 @@ class LibManager {
 
     static Set<Info.GAV> SysLib = Util.toSet(            // 系统缺省的JAR包
         new Info.GAV("com.google.code.gson", "gson", ""),//""2.8.9"),
-        new Info.GAV("io.netty", "netty-all", ""),//"4.1.70.Final"),
+        /*v2.4.0兼容*/new Info.GAV("io.netty", "netty-all", ""),//"4.1.70.Final"),
         new Info.GAV("io.netty", "netty-buffer", ""),//"4.1.70.Final"),
         new Info.GAV("io.netty", "netty-codec", ""),//"4.1.70.Final"),
-        new Info.GAV("io.netty", "netty-codec-dns", ""),//"4.1.70.Final"),
-        new Info.GAV("io.netty", "netty-codec-haproxy", ""),//"4.1.70.Final"),
-        new Info.GAV("io.netty", "netty-codec-http2", ""),//"4.1.70.Final"),
-        new Info.GAV("io.netty", "netty-codec-http", ""),//"4.1.70.Final"),
-        new Info.GAV("io.netty", "netty-codec-memcache", ""),//"4.1.70.Final"),
-        new Info.GAV("io.netty", "netty-codec-mqtt", ""),//"4.1.70.Final"),
-        new Info.GAV("io.netty", "netty-codec-redis", ""),//"4.1.70.Final"),
-        new Info.GAV("io.netty", "netty-codec-smtp", ""),//"4.1.70.Final"),
-        new Info.GAV("io.netty", "netty-codec-socks", ""),//"4.1.70.Final"),
-        new Info.GAV("io.netty", "netty-codec-stomp", ""),//"4.1.70.Final"),
-        new Info.GAV("io.netty", "netty-codec-xml", ""),//"4.1.70.Final"),
+        /*v2.4.0兼容*/new Info.GAV("io.netty", "netty-codec-dns", ""),//"4.1.70.Final"),
+        /*v2.4.0兼容*/new Info.GAV("io.netty", "netty-codec-haproxy", ""),//"4.1.70.Final"),
+        /*v2.4.0兼容*/new Info.GAV("io.netty", "netty-codec-http2", ""),//"4.1.70.Final"),
+        /*v2.4.0兼容*/new Info.GAV("io.netty", "netty-codec-http", ""),//"4.1.70.Final"),
+        /*v2.4.0兼容*/new Info.GAV("io.netty", "netty-codec-memcache", ""),//"4.1.70.Final"),
+        /*v2.4.0兼容*/new Info.GAV("io.netty", "netty-codec-mqtt", ""),//"4.1.70.Final"),
+        /*v2.4.0兼容*/new Info.GAV("io.netty", "netty-codec-redis", ""),//"4.1.70.Final"),
+        /*v2.4.0兼容*/new Info.GAV("io.netty", "netty-codec-smtp", ""),//"4.1.70.Final"),
+        /*v2.4.0兼容*/new Info.GAV("io.netty", "netty-codec-socks", ""),//"4.1.70.Final"),
+        /*v2.4.0兼容*/new Info.GAV("io.netty", "netty-codec-stomp", ""),//"4.1.70.Final"),
+        /*v2.4.0兼容*/new Info.GAV("io.netty", "netty-codec-xml", ""),//"4.1.70.Final"),
         new Info.GAV("io.netty", "netty-common", ""),//"4.1.70.Final"),
         new Info.GAV("io.netty", "netty-handler", ""),//"4.1.70.Final"),
-        new Info.GAV("io.netty", "netty-handler-proxy", ""),//"4.1.70.Final"),
+        /*v2.4.0兼容*/new Info.GAV("io.netty", "netty-handler-proxy", ""),//"4.1.70.Final"),
         new Info.GAV("io.netty", "netty-resolver", ""),//"4.1.70.Final"),
-        new Info.GAV("io.netty", "netty-resolver-dns", ""),//"4.1.70.Final"),
-        new Info.GAV("io.netty", "netty-resolver-dns-classes-macos", ""),//"4.1.70.Final"),
+        /*v2.4.0兼容*/new Info.GAV("io.netty", "netty-resolver-dns", ""),//"4.1.70.Final"),
+        /*v2.4.0兼容*/new Info.GAV("io.netty", "netty-resolver-dns-classes-macos", ""),//"4.1.70.Final"),
         //new Info.GAV("io.netty", "netty-resolver-dns-native-macos:osx-aarch_64", ""),//"4.1.70.Final"),
-        new Info.GAV("io.netty", "netty-resolver-dns-native-macos", ""),//"4.1.70.Final"), 取代上下两个native包
+        /*v2.4.0兼容*/new Info.GAV("io.netty", "netty-resolver-dns-native-macos", ""),//"4.1.70.Final"), 取代上下两个native包
         //new Info.GAV("io.netty", "netty-resolver-dns-native-macos:osx-x86_64", ""),//"4.1.70.Final"),
-        new Info.GAV("io.netty", "netty-tcnative-classes", ""),//"4.1.70.Final"),
+        /*v2.4.0兼容*/new Info.GAV("io.netty", "netty-tcnative-classes", ""),//"4.1.70.Final"),
         new Info.GAV("io.netty", "netty-transport", ""),//"4.1.70.Final"),
-        new Info.GAV("io.netty", "netty-transport-classes-epoll", ""),//"4.1.70.Final"),
-        new Info.GAV("io.netty", "netty-transport-classes-kqueue", ""),//"4.1.70.Final"),
+        /*v2.4.0兼容*/new Info.GAV("io.netty", "netty-transport-classes-epoll", ""),//"4.1.70.Final"),
+        /*v2.4.0兼容*/new Info.GAV("io.netty", "netty-transport-classes-kqueue", ""),//"4.1.70.Final"),
         //new Info.GAV("io.netty", "netty-transport-native-epoll:linux-aarch_64", ""),//"4.1.70.Final"),
-        new Info.GAV("io.netty", "netty-transport-native-epoll", ""),//"4.1.70.Final"), 取代上下两个native包
+        /*v2.4.0兼容*/new Info.GAV("io.netty", "netty-transport-native-epoll", ""),//"4.1.70.Final"), 取代上下两个native包
         //new Info.GAV("io.netty", "netty-transport-native-epoll:linux-x86_64", ""),//"4.1.70.Final"),
         //new Info.GAV("io.netty", "netty-transport-native-kqueue:osx-aarch_64", ""),//"4.1.70.Final"),
-        new Info.GAV("io.netty", "netty-transport-native-kqueue", ""),//"4.1.70.Final"), 取代上下两个native包
+        /*v2.4.0兼容*/new Info.GAV("io.netty", "netty-transport-native-kqueue", ""),//"4.1.70.Final"), 取代上下两个native包
         //new Info.GAV("io.netty", "netty-transport-native-kqueue:osx-x86_64", ""),//"4.1.70.Final"),
         new Info.GAV("io.netty", "netty-transport-native-unix-common", ""),//"4.1.70.Final"),
-        new Info.GAV("io.netty", "netty-transport-rxtx", ""),//"4.1.70.Final"),
-        new Info.GAV("io.netty", "netty-transport-sctp", ""),//"4.1.70.Final"),
-        new Info.GAV("io.netty", "netty-transport-udt", ""),//"4.1.70.Final"),
+        /*v2.4.0兼容*/new Info.GAV("io.netty", "netty-transport-rxtx", ""),//"4.1.70.Final"),
+        /*v2.4.0兼容*/new Info.GAV("io.netty", "netty-transport-sctp", ""),//"4.1.70.Final"),
+        /*v2.4.0兼容*/new Info.GAV("io.netty", "netty-transport-udt", ""),//"4.1.70.Final"),
         /* Test Scope
         new Info.GAV("junit", "junit", ""),//"4.13.2"),
         new Info.GAV("org.hamcrest", "hamcrest-core", ""),//"1.3"),
         */
         new Info.GAV("org.apache.commons", "commons-pool2", ""),//"2.10.0"),
-        new Info.GAV("org.bouncycastle", "bcprov-jdk15on", ""),//"1.69"),
+        /*v2.4.0兼容*/new Info.GAV("org.bouncycastle", "bcprov-jdk15on", ""),//"1.69"),
+        /*v2.4.0新增*/new Info.GAV("org.bouncycastle", "bcprov-jdk18on", ""),//"1.72"),
         new Info.GAV("org.dom4j", "dom4j", ""),//"2.1.3"),
-        //new Info.GAV("org.json", "json", ""),//"20211205"), with jedis 4.0.1
+        /*v2.4.0新增*/new Info.GAV("org.json", "json", ""),//"20220320"), with jedis 4.3.1
         new Info.GAV("org.mongodb", "mongo-java-driver", ""),//"3.12.10"),
         new Info.GAV("org.slf4j", "slf4j-api", ""),//"1.7.32"),
-        //new Info.GAV("org.slf4j", "slf4j-nop", ""),//"1.7.32"),
+        /*v2.4.0兼容*/new Info.GAV("org.slf4j", "slf4j-nop", ""),//"1.7.32"),
         new Info.GAV("redis.clients", "jedis", "")//"3.7.0")
     );
     static Map<Integer, Info.Lib>   ExtLib = new HashMap<>();       // 本地管理的JAR包

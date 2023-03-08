@@ -30,7 +30,7 @@ import java.util.*;
 @UService(
         name = "",
         tips = "UBSI微服务容器控制器",
-        version = "2.3.2",                      // 容器的版本号
+        version = "2.4.0",                      // 容器的版本号
         release = false                         // 容器的发行状态（false表示community-edition）
 )
 class Controller extends ControllerModule {
